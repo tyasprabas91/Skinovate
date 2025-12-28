@@ -18,9 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.skinovate.navigation.Screen
 
 @Composable
-fun SkinovateHomeScreen() {
+fun SkinovateHomeScreen(navController: NavController) {
     // Note: No Scaffold here! It's handled in SkinovateApp.kt
     Column(
         modifier = Modifier
@@ -31,8 +33,8 @@ fun SkinovateHomeScreen() {
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         HeaderSection(username = "Username")
-        RoutineSection()
-        FaceAnalysisSection()
+        RoutineSection(navController)
+        FaceAnalysisSection(navController)
         HighlightedProductsSection()
     }
 }
@@ -56,7 +58,7 @@ fun HeaderSection(username: String) {
 }
 
 @Composable
-fun RoutineSection() {
+fun RoutineSection(navController: NavController) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = "Routine",
@@ -94,7 +96,7 @@ fun RoutineSection() {
                     )
                 }
                 TextButton(
-                    onClick = { },
+                    onClick = { navController.navigate(Screen.RoutineMaker.route) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .offset(y = (12).dp),
@@ -108,7 +110,7 @@ fun RoutineSection() {
 }
 
 @Composable
-fun FaceAnalysisSection() {
+fun FaceAnalysisSection(navController: NavController) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primary
@@ -135,7 +137,7 @@ fun FaceAnalysisSection() {
                 Text("8% Dry Areas", color = Color.White.copy(alpha = 0.9f))
             }
             TextButton(
-                onClick = { },
+                onClick = { navController.navigate(Screen.FaceAnalysis.route) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(y = (12).dp),
