@@ -1,9 +1,13 @@
 package com.example.skinovate.screens
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,16 +15,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -28,15 +28,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.skinovate.screens.components.CameraPreview // Make sure this import exists!
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 // The 4 States of this Screen
 enum class ScanState { HISTORY, CAMERA_PREVIEW, ANALYZING, RESULT }
+
+// NEW: Data class to hold the random results
+data class ResultData(
+    val score: Int,
+    val skinType: String,
+    val acnePercentage: Int,
+    val dryPercentage: Int,
+    val recommendation: String
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaceAnalysisScreen(navController: NavController) {
     var currentState by remember { mutableStateOf(ScanState.HISTORY) }
+
+    // NEW: State to hold the current scan result
+    var currentResult by remember { mutableStateOf<ResultData?>(null) }
 
     // Mock Data for History
     val historyItems = listOf("Dec 28 - Oily", "Dec 20 - Dry", "Dec 12 - Normal")
@@ -48,10 +62,14 @@ fun FaceAnalysisScreen(navController: NavController) {
                 CenterAlignedTopAppBar(
                     title = { Text("Face Analysis", fontWeight = FontWeight.Bold) },
                     navigationIcon = {
-                        if (currentState != ScanState.HISTORY) {
-                            IconButton(onClick = { currentState = ScanState.HISTORY }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        IconButton(onClick = {
+                            if (currentState == ScanState.HISTORY) {
+                                navController.popBackStack() // Go home
+                            } else {
+                                currentState = ScanState.HISTORY // Go back to history
                             }
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -67,13 +85,26 @@ fun FaceAnalysisScreen(navController: NavController) {
                     historyItems = historyItems,
                     onStartScan = { currentState = ScanState.CAMERA_PREVIEW }
                 )
-                ScanState.CAMERA_PREVIEW -> CameraMockView(
+                ScanState.CAMERA_PREVIEW -> CameraView(
                     onCapture = { currentState = ScanState.ANALYZING }
                 )
                 ScanState.ANALYZING -> AnalyzingView(
-                    onFinished = { currentState = ScanState.RESULT }
+                    onFinished = {
+                        // --- THE BRAIN: GENERATE RANDOM RESULT ---
+                        val score = Random.nextInt(65, 98)
+                        val type = listOf("Oily", "Dry", "Combination", "Sensitive").random()
+                        currentResult = ResultData(
+                            score = score,
+                            skinType = type,
+                            acnePercentage = Random.nextInt(5, 30),
+                            dryPercentage = Random.nextInt(5, 30),
+                            recommendation = if(score > 85) "Maintain current routine" else "Add Hydration Serum"
+                        )
+                        currentState = ScanState.RESULT
+                    }
                 )
                 ScanState.RESULT -> ResultView(
+                    data = currentResult!!, // Pass the random data
                     onBack = { currentState = ScanState.HISTORY }
                 )
             }
@@ -85,12 +116,10 @@ fun FaceAnalysisScreen(navController: NavController) {
 @Composable
 fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
     Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
-        // The Big "New Scan" Card
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth().height(150.dp),
-            onClick = onStartScan
+            modifier = Modifier.fillMaxWidth().height(150.dp).clickable { onStartScan() } // Clickable!
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -105,7 +134,6 @@ fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
         Text("Scan History", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // History List
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(historyItems.size) { index ->
                 Card(
@@ -126,14 +154,34 @@ fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
     }
 }
 
-// --- 2. CAMERA MOCK VIEW ---
+// --- 2. CAMERA VIEW (With Real CameraX) ---
 @Composable
-fun CameraMockView(onCapture: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        // Fake Camera Feed (Grey Box)
-        Box(modifier = Modifier.fillMaxSize().padding(20.dp).clip(RoundedCornerShape(20.dp)).background(Color.DarkGray))
+fun CameraView(onCapture: () -> Unit) {
+    // Permission Handling
+    var hasPermission by remember { mutableStateOf(false) }
 
-        // Overlay Layout
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted -> hasPermission = granted }
+    )
+
+    // Use "android.Manifest" to avoid import confusion
+    LaunchedEffect(Unit) {
+        launcher.launch(android.Manifest.permission.CAMERA)
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+
+        // Show Real Camera if allowed
+        if (hasPermission) {
+            CameraPreview(modifier = Modifier.fillMaxSize())
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Camera permission needed", color = Color.White)
+            }
+        }
+
+        // Overlay
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -141,7 +189,7 @@ fun CameraMockView(onCapture: () -> Unit) {
         ) {
             Spacer(modifier = Modifier.height(80.dp))
 
-            // The Face Outline
+            // Scanning Circle
             Box(
                 modifier = Modifier
                     .size(300.dp)
@@ -161,12 +209,11 @@ fun CameraMockView(onCapture: () -> Unit) {
     }
 }
 
-// --- 3. ANALYZING VIEW (Fake Scanning) ---
+// --- 3. ANALYZING VIEW ---
 @Composable
 fun AnalyzingView(onFinished: () -> Unit) {
-    // Auto-advance after 2 seconds
     LaunchedEffect(Unit) {
-        delay(2500)
+        delay(2000) // Fake "Thinking" time (2 seconds)
         onFinished()
     }
 
@@ -182,20 +229,19 @@ fun AnalyzingView(onFinished: () -> Unit) {
     }
 }
 
-// --- 4. RESULT VIEW (The Glow Up!) ---
+// --- 4. RESULT VIEW (Dynamic Data!) ---
 @Composable
-fun ResultView(onBack: () -> Unit) {
+fun ResultView(data: ResultData, onBack: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // TOP SECTION: The Score (Dark Background)
+        // TOP SECTION
         Box(
             modifier = Modifier
-                .weight(0.4f) // Takes top 40% of screen
+                .weight(0.4f)
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
-            // Close Button
             IconButton(
                 onClick = onBack,
                 modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
@@ -204,33 +250,35 @@ fun ResultView(onBack: () -> Unit) {
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // The Score Circle
+                // Dynamic Score Circle
                 Box(contentAlignment = Alignment.Center) {
                     Canvas(modifier = Modifier.size(140.dp)) {
                         drawCircle(color = Color.White.copy(alpha = 0.2f), style = Stroke(width = 20f))
+                        // Calculate arc based on score (e.g., 80% = 288 degrees)
+                        val angle = (data.score / 100f) * 360f
                         drawArc(
-                            color = Color(0xFFE9C46A), // Gold Accent
+                            color = Color(0xFFE9C46A),
                             startAngle = -90f,
-                            sweepAngle = 240f, // 67% filled
+                            sweepAngle = angle,
                             useCenter = false,
                             style = Stroke(width = 20f, cap = StrokeCap.Round)
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("67%", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Text("${data.score}%", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
                         Text("Score", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Diagnosis Text
-                Text("Oily & Sensitive", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-                Text("Detected 17% Acne Prone areas", color = Color.White.copy(alpha = 0.7f))
+                // Dynamic Text
+                Text("${data.skinType} Skin", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+                Text("Detected ${data.acnePercentage}% Acne Prone areas", color = Color.White.copy(alpha = 0.7f))
             }
         }
 
-        // BOTTOM SECTION: Recommendations (White Sheet)
+        // BOTTOM SECTION
         Box(
             modifier = Modifier
                 .weight(0.6f)
@@ -243,11 +291,11 @@ fun ResultView(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 item {
-                    Text("Recommended Plan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Analysis Results", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    TreatmentStep(1, "Use Salicylic Acid Cleanser (AM/PM)")
-                    TreatmentStep(2, "Apply Niacinamide Serum")
-                    TreatmentStep(3, "Use Oil-Free Moisturizer")
+                    TreatmentStep(1, data.recommendation)
+                    TreatmentStep(2, "Detected ${data.dryPercentage}% Dryness")
+                    TreatmentStep(3, "Use SPF 50 Daily")
                 }
 
                 item {
@@ -264,6 +312,8 @@ fun ResultView(onBack: () -> Unit) {
     }
 }
 
+// Keep your Helper Composable (TreatmentStep & ProductCardPlaceholder) from before
+// Or paste them here if you need them again:
 @Composable
 fun TreatmentStep(number: Int, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {

@@ -14,6 +14,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.skinovate.navigation.Screen
 import com.example.skinovate.screens.FaceAnalysisScreen
+import com.example.skinovate.screens.ProductScreen
 import com.example.skinovate.screens.RoutineMakerScreen
 import com.example.skinovate.screens.SkinovateHomeScreen
 
@@ -47,7 +48,7 @@ fun SkinovateApp() {
 
             // Screen 3: Products (Placeholder)
             composable(Screen.Products.route) {
-                Text("Products Screen Placeholder")
+                ProductScreen(navController)
             }
 
             // Screen 4: Settings (Placeholder)
@@ -64,6 +65,8 @@ fun SkinovateApp() {
             composable(Screen.FaceAnalysis.route) {
                 FaceAnalysisScreen(navController)
             }
+
+
         }
     }
 }
