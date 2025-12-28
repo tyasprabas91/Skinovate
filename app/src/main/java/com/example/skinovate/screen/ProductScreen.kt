@@ -1,5 +1,6 @@
-package com.example.skinovate.screens
+package com.example.skinovate.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,33 +19,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.ProductRepository
-import com.example.skinovate.data.SkincareStep
-import androidx.compose.ui.platform.LocalUriHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductScreen(navController: NavController) { // NavController added (even if unused yet, good practice)
+fun ProductScreen(navController: NavController) {
 
     // --- State Variables ---
     var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<SkincareStep?>(null) }
-    var selectedProduct by remember { mutableStateOf<Product?>(null) } // For Bottom Sheet
+    // We now use String for category since your model uses String
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
     val sheetState = rememberModalBottomSheetState()
 
+    // --- Get Unique Categories Dynamically ---
+    val allCategories = remember {
+        ProductRepository.allProducts.map { it.category }.distinct()
+    }
+
     // --- Filtering Logic ---
-    // We filter the BIG list based on the search text AND the category chip
     val displayedProducts = remember(searchQuery, selectedCategory) {
         ProductRepository.allProducts.filter { product ->
             val matchesSearch = product.name.contains(searchQuery, ignoreCase = true) ||
-                    product.brand.contains(searchQuery, ignoreCase = true)
-            val matchesCategory = selectedCategory == null || product.category == selectedCategory
+                    product.description.contains(searchQuery, ignoreCase = true)
+
+            // FIX: Compare String to String directly
+            val matchesCategory = selectedCategory == null ||
+                    product.category.equals(selectedCategory, ignoreCase = true)
 
             matchesSearch && matchesCategory
         }
@@ -57,7 +66,7 @@ fun ProductScreen(navController: NavController) { // NavController added (even i
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp)
-                    .statusBarsPadding() // Avoid overlapping system bar
+                    .statusBarsPadding()
             ) {
                 Text("Find Products", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
@@ -66,7 +75,7 @@ fun ProductScreen(navController: NavController) { // NavController added (even i
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search brands, products...") },
+                    placeholder = { Text("Search products...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -87,14 +96,14 @@ fun ProductScreen(navController: NavController) { // NavController added (even i
                             label = { Text("All") }
                         )
                     }
-                    items(SkincareStep.values()) { category ->
+                    items(allCategories) { category ->
                         FilterChip(
                             selected = selectedCategory == category,
                             onClick = {
                                 // Toggle logic: Click again to unselect
                                 selectedCategory = if (selectedCategory == category) null else category
                             },
-                            label = { Text(category.displayName) }
+                            label = { Text(category) }
                         )
                     }
                 }
@@ -103,7 +112,7 @@ fun ProductScreen(navController: NavController) { // NavController added (even i
     ) { padding ->
         // 3. The 2-Column Grid
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2), // <--- THE 2-COLUMN MAGIC
+            columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -112,7 +121,7 @@ fun ProductScreen(navController: NavController) { // NavController added (even i
             items(displayedProducts) { product ->
                 ProductGridItem(
                     product = product,
-                    onClick = { selectedProduct = product } // Open sheet
+                    onClick = { selectedProduct = product }
                 )
             }
         }
@@ -142,29 +151,37 @@ fun ProductGridItem(product: Product, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Placeholder Image
+            // Image Area
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
+                    .height(120.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray)
-            )
+                    .background(Color(0xFFF5F5F5)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = product.imageResId),
+                    contentDescription = product.name,
+                    contentScale = ContentScale.Fit, // Fit ensures the whole image is visible
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Brand & Name
-            Text(product.brand.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            // Category & Name
+            Text(product.category.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             Text(product.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Rating & Price
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Star, null, tint = Color(0xFFE9C46A), modifier = Modifier.size(14.dp))
-                Text(" ${product.rating}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(product.price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-            }
+            // Price
+            Text(
+                text = "$${product.price}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -172,60 +189,62 @@ fun ProductGridItem(product: Product, onClick: () -> Unit) {
 // --- Component: Bottom Sheet Content ---
 @Composable
 fun ProductDetailContent(product: Product) {
-    val uriHandler = LocalUriHandler.current
+    Column(modifier = Modifier
+        .padding(24.dp)
+        .padding(bottom = 32.dp)) {
 
-    Column(modifier = Modifier.padding(24.dp).padding(bottom = 32.dp)) {
         // Header Image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp)
+                .height(180.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.LightGray)
-        )
+                .background(Color(0xFFF5F5F5)),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = product.imageResId),
+                contentDescription = product.name,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(150.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Title Block
-        Text(product.brand, style = MaterialTheme.typography.titleMedium, color = Color.Gray)
+        Text(product.category, style = MaterialTheme.typography.titleMedium, color = Color.Gray)
         Text(product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Star, null, tint = Color(0xFFE9C46A))
-            Text(" ${product.rating} (${product.reviewCount} reviews)", fontWeight = FontWeight.Medium)
-        }
 
         Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-        // Description (Mock)
+        // Description
         Text("Description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            "This ${product.category.displayName} is formulated to improve skin texture and hydration. Suitable for sensitive skin.",
+            text = product.description,
             style = MaterialTheme.typography.bodyMedium,
             color = Color.DarkGray
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Targets
+        Text("Best For:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            product.targetSkinConditions.forEach { condition ->
+                SuggestionChip(onClick = {}, label = { Text(condition) })
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // Buy Button
         Button(
-            onClick = {
-                uriHandler.openUri(product.storeUrl)
-            },
+            onClick = { /* TODO: Add cart or link logic */ },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            // Make it clear they are leaving the app
-            Text("Shop on Store - ${product.price}")
+            Text("Add to Routine - $${product.price}")
         }
-
-        // disclaimer text
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "You will be redirected to the seller's page.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
     }
 }

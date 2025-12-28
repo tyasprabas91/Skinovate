@@ -1,9 +1,8 @@
-package com.example.skinovate.screens
+package com.example.skinovate.screen
 
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,29 +27,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.skinovate.screens.components.CameraPreview // Make sure this import exists!
+import com.example.skinovate.data.ScanResult
+import com.example.skinovate.data.UserRepository
+import com.example.skinovate.screen.components.CameraPreview // Ensure this file exists, or comment out if using placeholder
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 // The 4 States of this Screen
 enum class ScanState { HISTORY, CAMERA_PREVIEW, ANALYZING, RESULT }
 
-// NEW: Data class to hold the random results
-data class ResultData(
-    val score: Int,
-    val skinType: String,
-    val acnePercentage: Int,
-    val dryPercentage: Int,
-    val recommendation: String
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaceAnalysisScreen(navController: NavController) {
     var currentState by remember { mutableStateOf(ScanState.HISTORY) }
 
-    // NEW: State to hold the current scan result
-    var currentResult by remember { mutableStateOf<ResultData?>(null) }
+    // Use ScanResult from your data package
+    var currentResult by remember { mutableStateOf<ScanResult?>(null) }
 
     // Mock Data for History
     val historyItems = listOf("Dec 28 - Oily", "Dec 20 - Dry", "Dec 12 - Normal")
@@ -93,18 +85,26 @@ fun FaceAnalysisScreen(navController: NavController) {
                         // --- THE BRAIN: GENERATE RANDOM RESULT ---
                         val score = Random.nextInt(65, 98)
                         val type = listOf("Oily", "Dry", "Combination", "Sensitive").random()
-                        currentResult = ResultData(
+
+                        // Create the result object
+                        val newResult = ScanResult(
                             score = score,
                             skinType = type,
                             acnePercentage = Random.nextInt(5, 30),
                             dryPercentage = Random.nextInt(5, 30),
                             recommendation = if(score > 85) "Maintain current routine" else "Add Hydration Serum"
                         )
+
+                        // 1. Update Local State
+                        currentResult = newResult
+                        // 2. SAVE TO REPOSITORY (This makes it visible on Home Screen!)
+                        UserRepository.lastScan = newResult
+
                         currentState = ScanState.RESULT
                     }
                 )
                 ScanState.RESULT -> ResultView(
-                    data = currentResult!!, // Pass the random data
+                    data = currentResult!!,
                     onBack = { currentState = ScanState.HISTORY }
                 )
             }
@@ -119,7 +119,7 @@ fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth().height(150.dp).clickable { onStartScan() } // Clickable!
+            modifier = Modifier.fillMaxWidth().height(150.dp).clickable { onStartScan() }
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -154,10 +154,9 @@ fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
     }
 }
 
-// --- 2. CAMERA VIEW (With Real CameraX) ---
+// --- 2. CAMERA VIEW ---
 @Composable
 fun CameraView(onCapture: () -> Unit) {
-    // Permission Handling
     var hasPermission by remember { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
@@ -165,14 +164,11 @@ fun CameraView(onCapture: () -> Unit) {
         onResult = { granted -> hasPermission = granted }
     )
 
-    // Use "android.Manifest" to avoid import confusion
     LaunchedEffect(Unit) {
         launcher.launch(android.Manifest.permission.CAMERA)
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-
-        // Show Real Camera if allowed
         if (hasPermission) {
             CameraPreview(modifier = Modifier.fillMaxSize())
         } else {
@@ -181,22 +177,17 @@ fun CameraView(onCapture: () -> Unit) {
             }
         }
 
-        // Overlay
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Spacer(modifier = Modifier.height(80.dp))
-
-            // Scanning Circle
             Box(
                 modifier = Modifier
                     .size(300.dp)
                     .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape)
             )
-
-            // Capture Button
             Button(
                 onClick = onCapture,
                 modifier = Modifier.padding(bottom = 48.dp).size(80.dp),
@@ -213,10 +204,9 @@ fun CameraView(onCapture: () -> Unit) {
 @Composable
 fun AnalyzingView(onFinished: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(2000) // Fake "Thinking" time (2 seconds)
+        delay(2000)
         onFinished()
     }
-
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center
@@ -229,17 +219,12 @@ fun AnalyzingView(onFinished: () -> Unit) {
     }
 }
 
-// --- 4. RESULT VIEW (Dynamic Data!) ---
+// --- 4. RESULT VIEW ---
 @Composable
-fun ResultView(data: ResultData, onBack: () -> Unit) {
+fun ResultView(data: ScanResult, onBack: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
-
-        // TOP SECTION
         Box(
-            modifier = Modifier
-                .weight(0.4f)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary),
+            modifier = Modifier.weight(0.4f).fillMaxWidth().background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             IconButton(
@@ -248,13 +233,10 @@ fun ResultView(data: ResultData, onBack: () -> Unit) {
             ) {
                 Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
             }
-
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Dynamic Score Circle
                 Box(contentAlignment = Alignment.Center) {
                     Canvas(modifier = Modifier.size(140.dp)) {
                         drawCircle(color = Color.White.copy(alpha = 0.2f), style = Stroke(width = 20f))
-                        // Calculate arc based on score (e.g., 80% = 288 degrees)
                         val angle = (data.score / 100f) * 360f
                         drawArc(
                             color = Color(0xFFE9C46A),
@@ -269,20 +251,14 @@ fun ResultView(data: ResultData, onBack: () -> Unit) {
                         Text("Score", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }
-
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Dynamic Text
                 Text("${data.skinType} Skin", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
                 Text("Detected ${data.acnePercentage}% Acne Prone areas", color = Color.White.copy(alpha = 0.7f))
             }
         }
 
-        // BOTTOM SECTION
         Box(
-            modifier = Modifier
-                .weight(0.6f)
-                .fillMaxWidth()
+            modifier = Modifier.weight(0.6f).fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(Color.White)
         ) {
@@ -297,14 +273,11 @@ fun ResultView(data: ResultData, onBack: () -> Unit) {
                     TreatmentStep(2, "Detected ${data.dryPercentage}% Dryness")
                     TreatmentStep(3, "Use SPF 50 Daily")
                 }
-
                 item {
                     Text("Top Product Picks", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(3) {
-                            ProductCardPlaceholder()
-                        }
+                        items(3) { ProductCardPlaceholder() }
                     }
                 }
             }
@@ -312,8 +285,7 @@ fun ResultView(data: ResultData, onBack: () -> Unit) {
     }
 }
 
-// Keep your Helper Composable (TreatmentStep & ProductCardPlaceholder) from before
-// Or paste them here if you need them again:
+// Helper Composables
 @Composable
 fun TreatmentStep(number: Int, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {

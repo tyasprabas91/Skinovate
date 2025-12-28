@@ -1,4 +1,4 @@
-package com.example.skinovate.screens.components
+package com.example.skinovate.screen.components
 
 import android.annotation.SuppressLint
 import androidx.camera.core.ImageAnalysis

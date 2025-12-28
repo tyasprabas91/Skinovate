@@ -1,4 +1,4 @@
-package com.example.skinovate.screens.components
+package com.example.skinovate.screen.components
 
 import android.content.Context
 import androidx.camera.core.CameraSelector

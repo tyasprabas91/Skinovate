@@ -1,4 +1,4 @@
-package com.example.skinovate.screens
+package com.example.skinovate.screen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.skinovate.data.Routine
 import com.example.skinovate.data.RoutineRepository
+import com.example.skinovate.screen.components.AddActivitySheet
+
 
 // Define states for the Bottom Sheet
 enum class SheetMode { NONE, EDIT_LIST, ADD_NEW }

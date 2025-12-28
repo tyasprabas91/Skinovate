@@ -1,4 +1,4 @@
-package com.example.skinovate.screens
+package com.example.skinovate.screen.components
 
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable

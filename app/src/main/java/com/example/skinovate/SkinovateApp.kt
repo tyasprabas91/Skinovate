@@ -13,10 +13,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.skinovate.navigation.Screen
-import com.example.skinovate.screens.FaceAnalysisScreen
-import com.example.skinovate.screens.ProductScreen
-import com.example.skinovate.screens.RoutineMakerScreen
-import com.example.skinovate.screens.SkinovateHomeScreen
+import com.example.skinovate.screen.ProductScreen
+import com.example.skinovate.screen.FaceAnalysisScreen
+import com.example.skinovate.screen.RoutineMakerScreen
+import com.example.skinovate.screen.SkinovateHomeScreen
 
 @Composable
 fun SkinovateApp() {
@@ -86,12 +86,24 @@ fun SkinovateBottomBar(navController: NavController, items: List<Screen>) {
                 label = { Text(screen.title) },
                 selected = currentRoute == screen.route,
                 onClick = {
-                    navController.navigate(screen.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    // Check if we are clicking the Home button
+                    if (screen == Screen.Home) {
+                        // Pop everything up to Home, ensuring Home is the only thing left
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = false
+                            }
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    } else {
+                        // Normal navigation for other tabs
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
