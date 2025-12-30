@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.skinovate.data.Product
 import com.example.skinovate.data.Routine
 import com.example.skinovate.data.RoutineRepository
 import com.example.skinovate.screen.components.AddActivitySheet
@@ -26,6 +27,20 @@ import com.example.skinovate.screen.components.AddActivitySheet
 enum class SheetMode { NONE, EDIT_LIST, ADD_NEW }
 // Define which routine type we are currently touching
 enum class RoutineType { MORNING, EVENING }
+
+// Companion object to store product selected from Product Screen
+object RoutineMakerScreen {
+    var selectedProductForRoutine: Product? = null
+        private set
+    
+    fun setSelectedProduct(product: Product?) {
+        selectedProductForRoutine = product
+    }
+    
+    fun clearSelectedProduct() {
+        selectedProductForRoutine = null
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,8 +53,24 @@ fun RoutineMakerScreen(navController: NavController) {
     var sheetMode by remember { mutableStateOf(SheetMode.NONE) }
     // We only track the TYPE (Morning/Evening), not the data object itself
     var selectedRoutineType by remember { mutableStateOf<RoutineType?>(null) }
+    
+    // Check if there's a product selected from Product Screen
+    var selectedProduct by remember { mutableStateOf<Product?>(RoutineMakerScreen.selectedProductForRoutine) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    // Auto-open Add Activity Sheet if product is selected
+    LaunchedEffect(Unit) {
+        val product = RoutineMakerScreen.selectedProductForRoutine
+        if (product != null) {
+            selectedProduct = product
+            // Default to morning routine, user can change later
+            selectedRoutineType = RoutineType.MORNING
+            sheetMode = SheetMode.ADD_NEW
+            // Clear the selected product after storing locally
+            RoutineMakerScreen.clearSelectedProduct()
+        }
+    }
 
     // 3. Helper: Get the Live Routine based on selection
     // This ensures the Bottom Sheet ALWAYS sees the newest data
@@ -96,14 +127,25 @@ fun RoutineMakerScreen(navController: NavController) {
     }
 
     // 4. The Bottom Sheet Logic
-    if (sheetMode != SheetMode.NONE && activeRoutine != null) {
+    // Show sheet if in ADD_NEW mode (can work without activeRoutine) or EDIT_LIST mode (needs activeRoutine)
+    if (sheetMode == SheetMode.ADD_NEW || (sheetMode == SheetMode.EDIT_LIST && activeRoutine != null)) {
         ModalBottomSheet(
-            onDismissRequest = { closeSheet() },
+            onDismissRequest = { 
+                closeSheet()
+                // If coming from product, go back to products screen
+                if (selectedProduct != null) {
+                    navController.navigate(com.example.skinovate.navigation.Screen.Products.route) {
+                        popUpTo(com.example.skinovate.navigation.Screen.RoutineMaker.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            },
             sheetState = sheetState,
             containerColor = MaterialTheme.colorScheme.surface,
             dragHandle = { BottomSheetDefaults.DragHandle() }
         ) {
-            if (sheetMode == SheetMode.EDIT_LIST) {
+            if (sheetMode == SheetMode.EDIT_LIST && activeRoutine != null) {
                 // Pass 'activeRoutine' which is always up to date!
                 EditRoutineListContent(
                     routine = activeRoutine,
@@ -119,15 +161,42 @@ fun RoutineMakerScreen(navController: NavController) {
             } else if (sheetMode == SheetMode.ADD_NEW) {
                 AddActivitySheet(
                     isMorningContext = (selectedRoutineType == RoutineType.MORNING),
-                    onBack = { sheetMode = SheetMode.EDIT_LIST },
+                    onBack = { 
+                        if (activeRoutine != null) {
+                            sheetMode = SheetMode.EDIT_LIST
+                        } else {
+                            closeSheet()
+                        }
+                        // If coming from product, go back to products screen
+                        if (selectedProduct != null) {
+                            navController.navigate(com.example.skinovate.navigation.Screen.Products.route) {
+                                popUpTo(com.example.skinovate.navigation.Screen.RoutineMaker.route) {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    },
                     onSave = { newStep ->
                         if (selectedRoutineType == RoutineType.MORNING) {
                             RoutineRepository.addStepToMorning(newStep)
                         } else {
                             RoutineRepository.addStepToEvening(newStep)
                         }
-                        sheetMode = SheetMode.EDIT_LIST
-                    }
+                        if (activeRoutine != null) {
+                            sheetMode = SheetMode.EDIT_LIST
+                        } else {
+                            closeSheet()
+                        }
+                        // If coming from product, go back to products screen after saving
+                        if (selectedProduct != null) {
+                            navController.navigate(com.example.skinovate.navigation.Screen.Products.route) {
+                                popUpTo(com.example.skinovate.navigation.Screen.RoutineMaker.route) {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    },
+                    product = selectedProduct
                 )
             }
         }

@@ -18,6 +18,11 @@ import com.example.skinovate.screen.FaceAnalysisScreen
 import com.example.skinovate.screen.RoutineMakerScreen
 import com.example.skinovate.screen.SkinovateHomeScreen
 import com.example.skinovate.screen.ProfileScreen
+import com.example.skinovate.screen.FeaturesScreen
+import com.example.skinovate.screen.NotificationSettingsScreen
+import com.example.skinovate.screen.PrivacySettingsScreen
+import com.example.skinovate.screen.AboutScreen
+import com.example.skinovate.screen.HelpSupportScreen
 import com.example.skinovate.auth.AuthViewModel
 import android.content.Context
 
@@ -48,9 +53,9 @@ fun SkinovateApp(
                 SkinovateHomeScreen(navController = navController)
             }
 
-            // Screen 2: Features (Placeholder)
+            // Screen 2: Features
             composable(Screen.Features.route) {
-                Text("Features Screen Placeholder")
+                FeaturesScreen(navController = navController)
             }
 
             // Screen 3: Products (Placeholder)
@@ -77,12 +82,27 @@ fun SkinovateApp(
                 RoutineMakerScreen(navController)
             }
 
-            // Screen 6: Face Analysis (Placeholder)
+            // Screen 6: Face Analysis
             composable(Screen.FaceAnalysis.route) {
                 FaceAnalysisScreen(navController)
             }
 
+            // Profile Sub-screens
+            composable(Screen.NotificationSettings.route) {
+                NotificationSettingsScreen(navController = navController)
+            }
 
+            composable(Screen.PrivacySettings.route) {
+                PrivacySettingsScreen(navController = navController)
+            }
+
+            composable(Screen.About.route) {
+                AboutScreen(navController = navController)
+            }
+
+            composable(Screen.HelpSupport.route) {
+                HelpSupportScreen(navController = navController)
+            }
         }
     }
 }

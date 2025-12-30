@@ -60,7 +60,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Profile Options
-            ProfileOptionSection()
+            ProfileOptionSection(navController = navController)
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -128,31 +128,31 @@ fun ProfileSection(user: com.example.skinovate.auth.User?) {
 }
 
 @Composable
-fun ProfileOptionSection() {
+fun ProfileOptionSection(navController: NavController) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SettingsItem(
             icon = Icons.Default.Notifications,
             title = "Notifikasi",
             subtitle = "Kelola notifikasi rutinitas",
-            onClick = { /* TODO */ }
+            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.NotificationSettings.route) }
         )
         SettingsItem(
             icon = Icons.Default.Lock,
             title = "Privasi",
             subtitle = "Kelola data pribadi Anda",
-            onClick = { /* TODO */ }
+            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.PrivacySettings.route) }
         )
         SettingsItem(
             icon = Icons.Default.Info,
             title = "Tentang Aplikasi",
             subtitle = "Versi 1.0.0",
-            onClick = { /* TODO */ }
+            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.About.route) }
         )
         SettingsItem(
             icon = Icons.Default.Info,
             title = "Bantuan & Dukungan",
             subtitle = "Dapatkan bantuan",
-            onClick = { /* TODO */ }
+            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.HelpSupport.route) }
         )
     }
 }

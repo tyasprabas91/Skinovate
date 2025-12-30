@@ -76,7 +76,10 @@ fun SkinovateHomeScreen(navController: NavController) {
             sheetState = sheetState,
             containerColor = Color.White
         ) {
-            ProductDetailContent(product = selectedProduct!!)
+            ProductDetailContent(
+                product = selectedProduct!!,
+                navController = navController
+            )
         }
     }
 }

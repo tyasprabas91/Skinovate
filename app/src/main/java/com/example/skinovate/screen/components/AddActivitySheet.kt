@@ -17,24 +17,49 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.skinovate.data.Product
 import com.example.skinovate.data.RoutineStep
 import com.example.skinovate.data.SkincareStep
 import java.util.Calendar
 import java.util.UUID
+
+// Helper function to map product category to SkincareStep
+fun mapProductCategoryToSkincareStep(category: String): SkincareStep? {
+    return when (category.lowercase()) {
+        "cleanser" -> SkincareStep.CLEANSER
+        "toner" -> SkincareStep.TONER
+        "exfoliator" -> SkincareStep.EXFOLIATOR
+        "serum" -> SkincareStep.SERUM
+        "moisturizer" -> SkincareStep.MOISTURIZER
+        "sunscreen" -> SkincareStep.SUNSCREEN
+        "retinol" -> SkincareStep.RETINOL
+        "eye cream" -> SkincareStep.EYE_CREAM
+        "face mask" -> SkincareStep.FACE_MASK
+        else -> null
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddActivitySheet(
     isMorningContext: Boolean,
     onBack: () -> Unit,
-    onSave: (RoutineStep) -> Unit
+    onSave: (RoutineStep) -> Unit,
+    product: Product? = null // Optional product parameter
 ) {
     // 1. Context for the Time Picker Dialog
     val context = LocalContext.current
 
-    // 2. State Variables
-    var selectedType by remember { mutableStateOf<SkincareStep?>(null) }
-    var productName by remember { mutableStateOf("") }
+    // 2. State Variables - Auto-fill if product is provided
+    val initialType = remember(product) {
+        product?.let { mapProductCategoryToSkincareStep(it.category) }
+    }
+    val initialProductName = remember(product) {
+        product?.let { "${it.brand} ${it.name}" } ?: ""
+    }
+    
+    var selectedType by remember { mutableStateOf<SkincareStep?>(initialType) }
+    var productName by remember { mutableStateOf(initialProductName) }
 
     // Smart Default Time: 8 AM for Morning, 9 PM for Evening
     var timeString by remember {

@@ -134,7 +134,10 @@ fun ProductScreen(navController: NavController) {
             sheetState = sheetState,
             containerColor = Color.White
         ) {
-            ProductDetailContent(product = selectedProduct!!)
+            ProductDetailContent(
+                product = selectedProduct!!,
+                navController = navController
+            )
         }
     }
 }
@@ -188,7 +191,10 @@ fun ProductGridItem(product: Product, onClick: () -> Unit) {
 
 // --- Component: Bottom Sheet Content ---
 @Composable
-fun ProductDetailContent(product: Product) {
+fun ProductDetailContent(
+    product: Product,
+    navController: NavController
+) {
     Column(modifier = Modifier
         .padding(24.dp)
         .padding(bottom = 32.dp)) {
@@ -238,9 +244,20 @@ fun ProductDetailContent(product: Product) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Buy Button
+        // Add to Routine Button
         Button(
-            onClick = { /* TODO: Add cart or link logic */ },
+            onClick = {
+                // Save product to be used in Routine Maker
+                RoutineMakerScreen.setSelectedProduct(product)
+                // Navigate to Routine Maker
+                navController.navigate(com.example.skinovate.navigation.Screen.RoutineMaker.route) {
+                    popUpTo(com.example.skinovate.navigation.Screen.Products.route) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
