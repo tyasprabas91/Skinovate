@@ -131,6 +131,12 @@ fun ProfileSection(user: com.example.skinovate.auth.User?) {
 fun ProfileOptionSection(navController: NavController) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SettingsItem(
+            icon = Icons.Default.Person,
+            title = "Informasi Pribadi",
+            subtitle = "Ubah nama, email, dan password",
+            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.PersonalInformation.route) }
+        )
+        SettingsItem(
             icon = Icons.Default.Notifications,
             title = "Notifikasi",
             subtitle = "Kelola notifikasi rutinitas",

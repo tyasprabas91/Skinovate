@@ -21,6 +21,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object FaceAnalysis : Screen("face_analysis", "Face Scan", Icons.Default.Face)
     
     // Profile Sub-screens
+    object PersonalInformation : Screen("personal_information", "Informasi Pribadi", Icons.Default.Person)
     object NotificationSettings : Screen("notification_settings", "Notifikasi", Icons.Default.Notifications)
     object PrivacySettings : Screen("privacy_settings", "Privasi", Icons.Default.Lock)
     object About : Screen("about", "Tentang", Icons.Default.Info)

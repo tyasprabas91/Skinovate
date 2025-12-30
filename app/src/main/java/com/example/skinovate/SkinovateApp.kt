@@ -18,6 +18,7 @@ import com.example.skinovate.screen.FaceAnalysisScreen
 import com.example.skinovate.screen.RoutineMakerScreen
 import com.example.skinovate.screen.SkinovateHomeScreen
 import com.example.skinovate.screen.ProfileScreen
+import com.example.skinovate.screen.PersonalInformationScreen
 import com.example.skinovate.screen.FeaturesScreen
 import com.example.skinovate.screen.NotificationSettingsScreen
 import com.example.skinovate.screen.PrivacySettingsScreen
@@ -88,6 +89,10 @@ fun SkinovateApp(
             }
 
             // Profile Sub-screens
+            composable(Screen.PersonalInformation.route) {
+                PersonalInformationScreen(navController = navController)
+            }
+
             composable(Screen.NotificationSettings.route) {
                 NotificationSettingsScreen(navController = navController)
             }

@@ -90,6 +90,54 @@ object AuthRepository {
         // Clear SharedPreferences
         prefs.edit().clear().apply()
     }
+    
+    // Update user information
+    fun updateUser(name: String, email: String, newPassword: String? = null): Boolean {
+        val currentUser = _currentUser.value ?: return false
+        val loginType = prefs.getString(KEY_LOGIN_TYPE, "") ?: ""
+        
+        // Update manual user if exists
+        if (loginType == "manual" && manualUsers.containsKey(currentUser.email)) {
+            val manualUser = manualUsers[currentUser.email]!!
+            val updatedUser = manualUser.copy(
+                name = name,
+                email = email,
+                password = newPassword ?: manualUser.password
+            )
+            // If email changed, remove old entry and add new one
+            if (email != currentUser.email) {
+                manualUsers.remove(currentUser.email)
+                manualUsers[email] = updatedUser
+            } else {
+                manualUsers[email] = updatedUser
+            }
+        }
+        
+        // Update current user
+        val updatedUser = User(
+            id = if (email != currentUser.email) email else currentUser.id,
+            name = name,
+            email = email,
+            photoUrl = currentUser.photoUrl
+        )
+        
+        _currentUser.value = updatedUser
+        
+        // Persist to SharedPreferences
+        prefs.edit().apply {
+            putString(KEY_USER_ID, updatedUser.id)
+            putString(KEY_USER_NAME, updatedUser.name)
+            putString(KEY_USER_EMAIL, updatedUser.email)
+            apply()
+        }
+        
+        return true
+    }
+    
+    // Get current login type
+    fun getLoginType(): String {
+        return prefs.getString(KEY_LOGIN_TYPE, "") ?: ""
+    }
 }
 
 data class User(
