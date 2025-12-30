@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.ProductRepository
+import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.data.ScanResult
 import com.example.skinovate.data.UserRepository
 import com.example.skinovate.navigation.Screen
@@ -32,6 +34,9 @@ fun SkinovateHomeScreen(navController: NavController) {
 
     // 1. Get Data from Repository
     val userScan = UserRepository.lastScan
+    val currentUser by AuthRepository.currentUser.collectAsState()
+    val username = currentUser?.name ?: "User"
+    
     // If we have a scan, filter products by that skin type. Otherwise show "All".
     val currentSkinCondition = userScan?.skinType ?: "All"
 
@@ -51,7 +56,7 @@ fun SkinovateHomeScreen(navController: NavController) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        HeaderSection(username = "User")
+        HeaderSection(username = username)
         RoutineSection(navController)
 
         // 3. Pass the scan data to the Face Section

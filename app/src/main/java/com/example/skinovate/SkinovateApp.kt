@@ -17,13 +17,20 @@ import com.example.skinovate.screen.ProductScreen
 import com.example.skinovate.screen.FaceAnalysisScreen
 import com.example.skinovate.screen.RoutineMakerScreen
 import com.example.skinovate.screen.SkinovateHomeScreen
+import com.example.skinovate.screen.ProfileScreen
+import com.example.skinovate.auth.AuthViewModel
+import android.content.Context
 
 @Composable
-fun SkinovateApp() {
+fun SkinovateApp(
+    authViewModel: AuthViewModel? = null,
+    context: Context? = null,
+    onLogout: () -> Unit = {}
+) {
     val navController = rememberNavController()
 
     // List of screens for the bottom bar
-    val items = listOf(Screen.Home, Screen.Features, Screen.Products, Screen.Settings)
+    val items = listOf(Screen.Home, Screen.Features, Screen.Products, Screen.Profile)
 
     Scaffold(
         bottomBar = {
@@ -51,9 +58,18 @@ fun SkinovateApp() {
                 ProductScreen(navController)
             }
 
-            // Screen 4: Settings (Placeholder)
-            composable(Screen.Settings.route) {
-                Text("Settings Screen Placeholder")
+            // Screen 4: Profile
+            composable(Screen.Profile.route) {
+                if (authViewModel != null && context != null) {
+                    ProfileScreen(
+                        navController = navController,
+                        authViewModel = authViewModel,
+                        context = context,
+                        onLogout = onLogout
+                    )
+                } else {
+                    Text("Profile Screen Placeholder")
+                }
             }
 
             // Screen 5: Routine Maker (Placeholder)

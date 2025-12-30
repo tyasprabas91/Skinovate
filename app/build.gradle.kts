@@ -59,6 +59,12 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation("com.google.mlkit:face-detection:16.1.5")
 
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+
+    // ViewModel & Lifecycle
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
     // CameraX core library using the camera2 implementation
     val camerax_version = "1.5.2" // Or newer
