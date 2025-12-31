@@ -1,15 +1,14 @@
 package com.example.skinovate.data
 
+import androidx.annotation.DrawableRes
+
 data class Product(
     val id: String,
     val name: String,
-    val brand: String,          // <--- Added
+    val brand: String,
+    val category: String,
     val description: String,
-    val imageResId: Int,
-    val category: String,       // Keep as String to be simple
     val price: Double,
-    val rating: Double,         // <--- Added
-    val reviewCount: Int,       // <--- Added
-    val storeUrl: String,       // <--- Added
-    val targetSkinConditions: List<String>
+    val targetSkinConditions: List<String>,
+    @DrawableRes val imageResId: Int
 )

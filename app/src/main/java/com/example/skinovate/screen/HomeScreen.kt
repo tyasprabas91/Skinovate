@@ -1,5 +1,6 @@
 package com.example.skinovate.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,12 +13,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -36,12 +39,24 @@ fun SkinovateHomeScreen(navController: NavController) {
     val userScan = UserRepository.lastScan
     val currentUser by AuthRepository.currentUser.collectAsState()
     val username = currentUser?.name ?: "User"
-    
+
     // If we have a scan, filter products by that skin type. Otherwise show "All".
     val currentSkinCondition = userScan?.skinType ?: "All"
 
+    // Get recommendations - if no method exists, just get all products
     val highlightedProducts = remember(currentSkinCondition) {
-        ProductRepository.getRecommendations(currentSkinCondition)
+        if (currentSkinCondition == "All") {
+            ProductRepository.allProducts.take(5)
+        } else {
+            // Filter products by skin condition if method doesn't exist
+            ProductRepository.allProducts.filter { product ->
+                product.targetSkinConditions.any {
+                    it.contains(currentSkinCondition, ignoreCase = true)
+                }
+            }.take(5).ifEmpty {
+                ProductRepository.allProducts.take(5)
+            }
+        }
     }
 
     // 2. Interaction State for Products
@@ -78,7 +93,8 @@ fun SkinovateHomeScreen(navController: NavController) {
         ) {
             ProductDetailContent(
                 product = selectedProduct!!,
-                navController = navController
+                navController = navController,
+                onDismiss = { selectedProduct = null }
             )
         }
     }
@@ -258,37 +274,198 @@ fun ProductCardItem(product: Product, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
-            // Placeholder Image
+            // Product Image
             Box(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color.LightGray)
-            )
+                    .background(Color(0xFFF5F5F5)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = product.imageResId),
+                    contentDescription = product.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(70.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                // Brand
+                Text(
+                    text = product.brand,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                // Product Name
                 Text(
                     text = product.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
+                // Category
                 Text(
                     text = product.category,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
+                // Price
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
-                    Text(" $${product.price}", style = MaterialTheme.typography.labelSmall)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Rp ${String.format("%,.0f", product.price)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
+        }
+    }
+}
+
+// Product Detail Content Component (dipanggil dari bottom sheet)
+@Composable
+fun ProductDetailContent(
+    product: Product,
+    navController: NavController,
+) {
+    Column(
+        modifier = Modifier
+            .padding(24.dp)
+            .padding(bottom = 32.dp)
+    ) {
+        // Header Image
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFFF5F5F5)),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = product.imageResId),
+                contentDescription = product.name,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(180.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Brand & Category
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = product.brand,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Text(
+                    text = product.category,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+
+        // Product Name
+        Text(
+            text = product.name,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium,
+            color = Color.DarkGray
+        )
+
+        Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+        // Description
+        Text(
+            text = "Description",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = product.description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.DarkGray,
+            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Targets
+        Text(
+            text = "Best For:",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Flow Row for chips
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            product.targetSkinConditions.chunked(3).forEach { rowItems ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    rowItems.forEach { condition ->
+                        SuggestionChip(
+                            onClick = {},
+                            label = { Text(condition) }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Add to Routine Button
+        Button(
+            onClick = {
+                // Save product to be used in Routine Maker
+                RoutineMakerScreen.setSelectedProduct(product)
+                // Navigate to Routine Maker
+                navController.navigate(Screen.RoutineMaker.route) {
+                    popUpTo(Screen.Products.route) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text(
+                text = "Add to Routine - Rp ${String.format("%,.0f", product.price)}",
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

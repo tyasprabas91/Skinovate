@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.ProductRepository
@@ -34,7 +33,6 @@ fun ProductScreen(navController: NavController) {
 
     // --- State Variables ---
     var searchQuery by remember { mutableStateOf("") }
-    // We now use String for category since your model uses String
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
@@ -42,16 +40,16 @@ fun ProductScreen(navController: NavController) {
 
     // --- Get Unique Categories Dynamically ---
     val allCategories = remember {
-        ProductRepository.allProducts.map { it.category }.distinct()
+        ProductRepository.allProducts.map { it.category }.distinct().sorted()
     }
 
     // --- Filtering Logic ---
     val displayedProducts = remember(searchQuery, selectedCategory) {
         ProductRepository.allProducts.filter { product ->
             val matchesSearch = product.name.contains(searchQuery, ignoreCase = true) ||
+                    product.brand.contains(searchQuery, ignoreCase = true) ||
                     product.description.contains(searchQuery, ignoreCase = true)
 
-            // FIX: Compare String to String directly
             val matchesCategory = selectedCategory == null ||
                     product.category.equals(selectedCategory, ignoreCase = true)
 
@@ -68,14 +66,18 @@ fun ProductScreen(navController: NavController) {
                     .padding(16.dp)
                     .statusBarsPadding()
             ) {
-                Text("Find Products", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Find Products",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 1. Search Bar
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search products...") },
+                    placeholder = { Text("Search products or brands...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -100,7 +102,6 @@ fun ProductScreen(navController: NavController) {
                         FilterChip(
                             selected = selectedCategory == category,
                             onClick = {
-                                // Toggle logic: Click again to unselect
                                 selectedCategory = if (selectedCategory == category) null else category
                             },
                             label = { Text(category) }
@@ -110,19 +111,43 @@ fun ProductScreen(navController: NavController) {
             }
         }
     ) { padding ->
-        // 3. The 2-Column Grid
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(padding)
-        ) {
-            items(displayedProducts) { product ->
-                ProductGridItem(
-                    product = product,
-                    onClick = { selectedProduct = product }
-                )
+        if (displayedProducts.isEmpty()) {
+            // Empty state
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No products found",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Try adjusting your search or filters",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+            }
+        } else {
+            // 3. The 2-Column Grid
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(padding)
+            ) {
+                items(displayedProducts) { product ->
+                    ProductGridItem(
+                        product = product,
+                        onClick = { selectedProduct = product }
+                    )
+                }
             }
         }
     }
@@ -136,7 +161,8 @@ fun ProductScreen(navController: NavController) {
         ) {
             ProductDetailContent(
                 product = selectedProduct!!,
-                navController = navController
+                navController = navController,
+                onDismiss = { selectedProduct = null }
             )
         }
     }
@@ -166,22 +192,50 @@ fun ProductGridItem(product: Product, onClick: () -> Unit) {
                 Image(
                     painter = painterResource(id = product.imageResId),
                     contentDescription = product.name,
-                    contentScale = ContentScale.Fit, // Fit ensures the whole image is visible
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.padding(8.dp)
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Category & Name
-            Text(product.category.uppercase(), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-            Text(product.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+            // Brand & Category
+            Text(
+                text = product.brand.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Product Name
+            Text(
+                text = product.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.height(40.dp)
+            )
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            // Category Badge
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                Text(
+                    text = product.category,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+
             // Price
             Text(
-                text = "$${product.price}",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Rp ${String.format("%,.0f", product.price)}",
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
@@ -193,17 +247,19 @@ fun ProductGridItem(product: Product, onClick: () -> Unit) {
 @Composable
 fun ProductDetailContent(
     product: Product,
-    navController: NavController
+    navController: NavController,
+    onDismiss: () -> Unit
 ) {
-    Column(modifier = Modifier
-        .padding(24.dp)
-        .padding(bottom = 32.dp)) {
-
+    Column(
+        modifier = Modifier
+            .padding(24.dp)
+            .padding(bottom = 32.dp)
+    ) {
         // Header Image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(200.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(Color(0xFFF5F5F5)),
             contentAlignment = Alignment.Center
@@ -212,33 +268,79 @@ fun ProductDetailContent(
                 painter = painterResource(id = product.imageResId),
                 contentDescription = product.name,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier.size(180.dp)
             )
         }
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Title Block
-        Text(product.category, style = MaterialTheme.typography.titleMedium, color = Color.Gray)
-        Text(product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        // Brand & Category
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = product.brand,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Text(
+                    text = product.category,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+
+        // Product Name
+        Text(
+            text = product.name,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium,
+            color = Color.DarkGray
+        )
 
         Divider(modifier = Modifier.padding(vertical = 16.dp))
 
         // Description
-        Text("Description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(
+            text = "Description",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = product.description,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.DarkGray
+            color = Color.DarkGray,
+            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Targets
-        Text("Best For:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Best For:",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             product.targetSkinConditions.forEach { condition ->
-                SuggestionChip(onClick = {}, label = { Text(condition) })
+                SuggestionChip(
+                    onClick = {},
+                    label = { Text(condition) }
+                )
             }
         }
 
@@ -249,6 +351,7 @@ fun ProductDetailContent(
             onClick = {
                 // Save product to be used in Routine Maker
                 RoutineMakerScreen.setSelectedProduct(product)
+                onDismiss()
                 // Navigate to Routine Maker
                 navController.navigate(com.example.skinovate.navigation.Screen.RoutineMaker.route) {
                     popUpTo(com.example.skinovate.navigation.Screen.Products.route) {
@@ -258,10 +361,73 @@ fun ProductDetailContent(
                     restoreState = true
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
-            Text("Add to Routine - $${product.price}")
+            Text(
+                text = "Add to Routine - Rp ${String.format("%,.0f", product.price)}",
+                fontWeight = FontWeight.Bold
+            )
         }
     }
+}
+
+@Composable
+fun FlowRow(
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        val placeables = measurables.map { it.measure(constraints) }
+
+        var xPos = 0
+        var yPos = 0
+        var maxHeight = 0
+
+        val positions = mutableListOf<Pair<Int, Int>>()
+
+        placeables.forEach { placeable ->
+            if (xPos + placeable.width > constraints.maxWidth) {
+                xPos = 0
+                yPos += maxHeight + 8
+                maxHeight = 0
+            }
+
+            positions.add(Pair(xPos, yPos))
+            xPos += placeable.width + 8
+            maxHeight = maxOf(maxHeight, placeable.height)
+        }
+
+        val width = constraints.maxWidth
+        val height = yPos + maxHeight
+
+        layout(width, height) {
+            placeables.forEachIndexed { index, placeable ->
+                val (x, y) = positions[index]
+                placeable.place(x, y)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Layout(
+    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    measurePolicy: androidx.compose.ui.layout.MeasurePolicy
+) {
+    androidx.compose.ui.layout.Layout(
+        content = content,
+        modifier = modifier,
+        measurePolicy = measurePolicy
+    )
 }
