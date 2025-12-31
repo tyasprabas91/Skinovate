@@ -1,5 +1,7 @@
 package com.example.skinovate.data
 
+import com.example.skinovate.R
+
 object ProductRepository {
 
     val allProducts = listOf(
@@ -12,7 +14,7 @@ object ProductRepository {
             description = "Gentle gel cleanser dengan niacinamide untuk membersihkan wajah tanpa membuat kering. Cocok untuk semua jenis kulit.",
             price = 65000.0,
             targetSkinConditions = listOf("Acne", "Oily Skin", "Dull Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.somethinc_cleanser
         ),
         Product(
             id = "cl002",
@@ -22,7 +24,7 @@ object ProductRepository {
             description = "Facial wash dengan formula lightening untuk kulit lebih cerah dan bersih.",
             price = 35000.0,
             targetSkinConditions = listOf("Dull Skin", "Dark Spots"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.wardah_cleanser
         ),
         Product(
             id = "cl003",
@@ -32,7 +34,7 @@ object ProductRepository {
             description = "Pembersih wajah khusus untuk kulit berjerawat dengan formula anti-acne.",
             price = 45000.0,
             targetSkinConditions = listOf("Acne", "Oily Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.scarlett_cleanser
         ),
         Product(
             id = "cl004",
@@ -42,7 +44,7 @@ object ProductRepository {
             description = "Gentle gel cleanser dengan pH rendah untuk membersihkan tanpa mengganggu skin barrier.",
             price = 120000.0,
             targetSkinConditions = listOf("Sensitive Skin", "Acne"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.cosrx_cleanser
         ),
         Product(
             id = "cl005",
@@ -52,7 +54,7 @@ object ProductRepository {
             description = "Cleansing oil dengan heartleaf untuk kontrol pori dan membersihkan makeup.",
             price = 180000.0,
             targetSkinConditions = listOf("Large Pores", "Oily Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.anua_cleanser
         ),
         Product(
             id = "cl006",
@@ -62,7 +64,7 @@ object ProductRepository {
             description = "Cleanser lembut yang cocok untuk kulit sensitif dan kering.",
             price = 95000.0,
             targetSkinConditions = listOf("Sensitive Skin", "Dry Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.cetaphil_cleanser
         ),
         Product(
             id = "cl007",
@@ -72,7 +74,7 @@ object ProductRepository {
             description = "Hydrating cleanser dengan ceramides untuk menjaga kelembaban kulit.",
             price = 150000.0,
             targetSkinConditions = listOf("Dry Skin", "Sensitive Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.cerave_cleanser
         ),
         Product(
             id = "cl008",
@@ -82,7 +84,7 @@ object ProductRepository {
             description = "Micellar water untuk kulit sensitif, membersihkan dan menenangkan.",
             price = 175000.0,
             targetSkinConditions = listOf("Sensitive Skin", "All Skin Types"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.bioderma_cleanser
         ),
 
         // TONER
@@ -94,7 +96,7 @@ object ProductRepository {
             description = "Toner dengan retinol untuk anti-aging dan mencerahkan kulit.",
             price = 125000.0,
             targetSkinConditions = listOf("Aging", "Dark Spots", "Dull Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.avoskin_toner
         ),
         Product(
             id = "tn002",
@@ -104,7 +106,7 @@ object ProductRepository {
             description = "Toner essence yang menenangkan dan memperkuat skin barrier.",
             price = 85000.0,
             targetSkinConditions = listOf("Sensitive Skin", "Irritated Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.whitelab_toner
         ),
         Product(
             id = "tn003",
@@ -114,7 +116,7 @@ object ProductRepository {
             description = "Essence toner dengan formula sederhana untuk hidrasi maksimal.",
             price = 180000.0,
             targetSkinConditions = listOf("Dry Skin", "Dehydrated Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.pyunkang_toner
         ),
         Product(
             id = "tn004",
@@ -124,7 +126,7 @@ object ProductRepository {
             description = "Toner dengan 77% heartleaf extract untuk menenangkan kulit sensitif.",
             price = 150000.0,
             targetSkinConditions = listOf("Sensitive Skin", "Redness", "Acne"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.anua_toner
         ),
         Product(
             id = "tn005",
@@ -134,7 +136,7 @@ object ProductRepository {
             description = "Exfoliating toner dengan AHA BHA PHA untuk kulit lebih halus.",
             price = 145000.0,
             targetSkinConditions = listOf("Acne", "Texture", "Dark Spots"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.somebymi_toner
         ),
         Product(
             id = "tn006",
@@ -144,7 +146,7 @@ object ProductRepository {
             description = "BHA liquid exfoliant untuk mengatasi blackheads dan pori-pori besar.",
             price = 380000.0,
             targetSkinConditions = listOf("Acne", "Large Pores", "Blackheads"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.paulachoice_toner
         ),
         Product(
             id = "tn007",
@@ -154,7 +156,7 @@ object ProductRepository {
             description = "Toning solution dengan 7% glycolic acid untuk eksfoliasi.",
             price = 165000.0,
             targetSkinConditions = listOf("Dull Skin", "Texture", "Dark Spots"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.theordinary_toner
         ),
 
         // SERUM
@@ -166,7 +168,7 @@ object ProductRepository {
             description = "Serum niacinamide dengan beetroot untuk brightening dan hidrasi.",
             price = 95000.0,
             targetSkinConditions = listOf("Dull Skin", "Dark Spots", "Dehydrated Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.somethinc_serum
         ),
         Product(
             id = "sr002",
@@ -176,7 +178,7 @@ object ProductRepository {
             description = "Multi-tasker serum dengan peptide dan retinol untuk anti-aging.",
             price = 135000.0,
             targetSkinConditions = listOf("Aging", "Fine Lines", "Wrinkles"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.avoskin_serum
         ),
         Product(
             id = "sr003",
@@ -186,7 +188,7 @@ object ProductRepository {
             description = "Serum dengan SPF untuk perlindungan dan hidrasi sekaligus.",
             price = 65000.0,
             targetSkinConditions = listOf("All Skin Types", "Sun Protection"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.azarine_serum
         ),
         Product(
             id = "sr004",
@@ -196,7 +198,7 @@ object ProductRepository {
             description = "Serum dengan propolis dan niacinamide untuk glowing skin.",
             price = 175000.0,
             targetSkinConditions = listOf("Dull Skin", "Acne", "Hyperpigmentation"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.beauty_of_jason_serum
         ),
         Product(
             id = "sr005",
@@ -206,7 +208,7 @@ object ProductRepository {
             description = "Ampoule dengan centella asiatica untuk menenangkan dan repair.",
             price = 195000.0,
             targetSkinConditions = listOf("Sensitive Skin", "Redness", "Irritation"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.ski1004_serum
         ),
         Product(
             id = "sr006",
@@ -216,7 +218,7 @@ object ProductRepository {
             description = "Serum dengan green tea untuk antioksidan dan hidrasi.",
             price = 250000.0,
             targetSkinConditions = listOf("Dry Skin", "Dull Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.innisfre_serum
         ),
         Product(
             id = "sr007",
@@ -226,7 +228,7 @@ object ProductRepository {
             description = "High-strength niacinamide untuk mengatasi pori dan blemishes.",
             price = 120000.0,
             targetSkinConditions = listOf("Acne", "Large Pores", "Oily Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.theordinary_serum
         ),
         Product(
             id = "sr008",
@@ -236,7 +238,7 @@ object ProductRepository {
             description = "Serum untuk kulit berjerawat dengan niacinamide dan salicylic acid.",
             price = 380000.0,
             targetSkinConditions = listOf("Acne", "Oily Skin", "Large Pores"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.la_roche_serum
         ),
         Product(
             id = "sr009",
@@ -246,7 +248,7 @@ object ProductRepository {
             description = "Vitamin C serum untuk brightening dan anti-aging.",
             price = 950000.0,
             targetSkinConditions = listOf("Dull Skin", "Dark Spots", "Aging"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.koehls_serum
         ),
 
         // MOISTURIZER
@@ -258,7 +260,7 @@ object ProductRepository {
             description = "Moisture gel dengan 5x ceramide untuk repair skin barrier.",
             price = 110000.0,
             targetSkinConditions = listOf("Dry Skin", "Sensitive Skin", "Damaged Barrier"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.skintific_mois
         ),
         Product(
             id = "ms002",
@@ -268,7 +270,7 @@ object ProductRepository {
             description = "Gel moisturizer dengan ceramide untuk kulit lembab dan sehat.",
             price = 95000.0,
             targetSkinConditions = listOf("Dry Skin", "Dehydrated Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.somethinc_mois
         ),
         Product(
             id = "ms003",
@@ -278,7 +280,7 @@ object ProductRepository {
             description = "Hydrating gel dengan ceramide untuk hidrasi optimal.",
             price = 75000.0,
             targetSkinConditions = listOf("Dry Skin", "All Skin Types"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.glad2glow_mois
         ),
         Product(
             id = "ms004",
@@ -288,7 +290,7 @@ object ProductRepository {
             description = "All in one cream dengan 92% snail mucin untuk repair dan hidrasi.",
             price = 230000.0,
             targetSkinConditions = listOf("Dry Skin", "Damaged Skin", "Aging"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.cosrx_mois
         ),
         Product(
             id = "ms005",
@@ -298,7 +300,7 @@ object ProductRepository {
             description = "Ceramide cream untuk kulit sangat kering dan sensitif.",
             price = 180000.0,
             targetSkinConditions = listOf("Dry Skin", "Eczema", "Sensitive Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.illiyon_mois
         ),
         Product(
             id = "ms006",
@@ -308,7 +310,7 @@ object ProductRepository {
             description = "Moisturizing cream dengan ceramides dan hyaluronic acid.",
             price = 200000.0,
             targetSkinConditions = listOf("Dry Skin", "Normal Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.cerave_mois
         ),
         Product(
             id = "ms007",
@@ -318,7 +320,7 @@ object ProductRepository {
             description = "Water gel dengan hyaluronic acid untuk hidrasi intens.",
             price = 170000.0,
             targetSkinConditions = listOf("Dehydrated Skin", "Oily Skin"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.neutro_mois
         ),
         Product(
             id = "ms008",
@@ -328,7 +330,7 @@ object ProductRepository {
             description = "Auto-replenishing hydrator untuk hidrasi 100 jam.",
             price = 595000.0,
             targetSkinConditions = listOf("Dry Skin", "Dehydrated Skin", "All Skin Types"),
-            imageResId = android.R.drawable.ic_menu_gallery
+            imageResId = R.drawable.clinique_mois
         )
     )
 }
