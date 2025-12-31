@@ -27,6 +27,40 @@ import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.ProductRepository
 
+// Helper function to get category color
+@Composable
+fun getCategoryColor(category: String): Color {
+    return when (category.lowercase()) {
+        "cleanser" -> Color(0xFFE3F2FD) // Light Blue
+        "toner" -> Color(0xFFF3E5F5) // Light Purple
+        "serum" -> Color(0xFFFFE0B2) // Light Orange
+        "moisturizer" -> Color(0xFFC8E6C9) // Light Green
+        "sunscreen" -> Color(0xFFFFF9C4) // Light Yellow
+        "exfoliator" -> Color(0xFFFCE4EC) // Light Pink
+        "retinol" -> Color(0xFFE1BEE7) // Light Purple-Pink
+        "eye cream" -> Color(0xFFBBDEFB) // Light Blue
+        "face mask" -> Color(0xFFFFCCBC) // Light Orange-Red
+        else -> Color(0xFFF5F5F5) // Default Gray
+    }
+}
+
+// Helper function to get category text color
+@Composable
+fun getCategoryTextColor(category: String): Color {
+    return when (category.lowercase()) {
+        "cleanser" -> Color(0xFF1976D2) // Dark Blue
+        "toner" -> Color(0xFF7B1FA2) // Dark Purple
+        "serum" -> Color(0xFFE65100) // Dark Orange
+        "moisturizer" -> Color(0xFF388E3C) // Dark Green
+        "sunscreen" -> Color(0xFFF57F17) // Dark Yellow
+        "exfoliator" -> Color(0xFFC2185B) // Dark Pink
+        "retinol" -> Color(0xFF7B1FA2) // Dark Purple
+        "eye cream" -> Color(0xFF1565C0) // Dark Blue
+        "face mask" -> Color(0xFFD84315) // Dark Orange-Red
+        else -> Color(0xFF616161) // Default Dark Gray
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductScreen(navController: NavController) {
@@ -104,7 +138,13 @@ fun ProductScreen(navController: NavController) {
                             onClick = {
                                 selectedCategory = if (selectedCategory == category) null else category
                             },
-                            label = { Text(category) }
+                            label = { Text(category) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = getCategoryColor(category),
+                                containerColor = Color(0xFFF5F5F5),
+                                selectedLabelColor = getCategoryTextColor(category),
+                                labelColor = Color.Gray
+                            )
                         )
                     }
                 }
@@ -220,14 +260,14 @@ fun ProductGridItem(product: Product, onClick: () -> Unit) {
 
             // Category Badge
             Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                color = getCategoryColor(product.category),
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier.padding(vertical = 4.dp)
             ) {
                 Text(
                     text = product.category,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = getCategoryTextColor(product.category),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                 )
             }
@@ -286,13 +326,13 @@ fun ProductDetailContent(
                 color = MaterialTheme.colorScheme.primary
             )
             Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                color = getCategoryColor(product.category),
                 shape = RoundedCornerShape(6.dp)
             ) {
                 Text(
                     text = product.category,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = getCategoryTextColor(product.category),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
@@ -371,6 +411,7 @@ fun ProductDetailContent(
             Text(
                 text = "Add to Routine - Rp ${String.format("%,.0f", product.price)}",
                 fontWeight = FontWeight.Bold
+
             )
         }
     }
@@ -418,6 +459,7 @@ fun FlowRow(
         }
     }
 }
+
 
 @Composable
 private fun Layout(
