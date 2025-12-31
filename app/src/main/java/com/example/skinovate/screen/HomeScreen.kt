@@ -271,6 +271,7 @@ fun ProductCardItem(product: Product, onClick: () -> Unit) {
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .width(280.dp)
+            .height(120.dp)
             .clickable { onClick() }
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
