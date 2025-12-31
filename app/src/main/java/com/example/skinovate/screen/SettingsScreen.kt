@@ -148,12 +148,12 @@ fun ProfileOptionSection(navController: NavController) {
             subtitle = "Kelola data pribadi Anda",
             onClick = { navController.navigate(com.example.skinovate.navigation.Screen.PrivacySettings.route) }
         )
-        SettingsItem(
-            icon = Icons.Default.Info,
-            title = "Tentang Aplikasi",
-            subtitle = "Versi 1.0.0",
-            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.About.route) }
-        )
+//        SettingsItem(
+//            icon = Icons.Default.Info,
+//            title = "Tentang Aplikasi",
+//            subtitle = "Versi 1.0.0",
+//            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.About.route) }
+//        )
         SettingsItem(
             icon = Icons.Default.Info,
             title = "Bantuan & Dukungan",
