@@ -93,7 +93,7 @@ fun AuthScreen(
                 // Welcome Text
                 WelcomeSection()
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Unified Login Form
                 UnifiedLoginForm(
@@ -137,24 +137,15 @@ fun AnimatedLogo() {
 
     Box(
         modifier = Modifier
-            .size(120.dp)
-            .scale(scale)
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.secondary
-                    )
-                )
-            ),
+            .size(150.dp)
+            .scale(scale),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Face,
+        Image(
+            painter = painterResource(id = R.drawable.logo_skinovate),
             contentDescription = "Skinovate Logo",
-            tint = Color.White,
-            modifier = Modifier.size(64.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit
         )
     }
 }
@@ -203,19 +194,6 @@ fun UnifiedLoginForm(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Toggle Register/Login (small text button)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            TextButton(onClick = { isRegisterMode = !isRegisterMode }) {
-                Text(
-                    text = if (isRegisterMode) "Sudah punya akun? Masuk" else "Belum punya akun? Daftar",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-
         // Name field (only for register)
         if (isRegisterMode) {
             OutlinedTextField(
@@ -342,6 +320,19 @@ fun UnifiedLoginForm(
                 }
             }
         )
+
+        // Toggle Register/Login (below Google button)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            TextButton(onClick = { isRegisterMode = !isRegisterMode }) {
+                Text(
+                    text = if (isRegisterMode) "Sudah punya akun? Masuk" else "Belum punya akun? Daftar",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
     }
 }
 
