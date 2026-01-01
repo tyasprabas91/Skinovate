@@ -54,11 +54,6 @@ fun ProfileScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Profile Section
-            ProfileSection(user = currentUser)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Profile Options
             ProfileOptionSection(navController = navController)
 
@@ -129,13 +124,67 @@ fun ProfileSection(user: com.example.skinovate.auth.User?) {
 
 @Composable
 fun ProfileOptionSection(navController: NavController) {
+    val currentUser by AuthRepository.currentUser.collectAsState()
+    
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SettingsItem(
-            icon = Icons.Default.Person,
-            title = "Informasi Pribadi",
-            subtitle = "Ubah nama, email, dan password",
-            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.PersonalInformation.route) }
-        )
+        // Informasi Pribadi - styled like ProfileSection
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { navController.navigate(com.example.skinovate.navigation.Screen.PersonalInformation.route) }
+        ) {
+            Row(
+                modifier = Modifier.padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Profile Picture
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = currentUser?.name ?: "User",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = currentUser?.email ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
+                
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
         SettingsItem(
             icon = Icons.Default.Notifications,
             title = "Notifikasi",

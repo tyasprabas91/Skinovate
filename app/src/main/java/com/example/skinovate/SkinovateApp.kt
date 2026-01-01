@@ -1,11 +1,19 @@
 package com.example.skinovate
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -35,7 +43,7 @@ fun SkinovateApp(
 ) {
     val navController = rememberNavController()
 
-    // List of screens for the bottom bar
+    // List of screens for the bottom bar (excluding FaceAnalysis which is in the center)
     val items = listOf(Screen.Home, Screen.Features, Screen.Products, Screen.Profile)
 
     Scaffold(
@@ -117,44 +125,145 @@ fun SkinovateBottomBar(navController: NavController, items: List<Screen>) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = Color.White
+    // Split items into left and right for the center button
+    val leftItems = items.take(2) // Home, Features
+    val rightItems = items.drop(2) // Products, Profile
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary,
+        shadowElevation = 8.dp
     ) {
-        items.forEach { screen ->
-            NavigationBarItem(
-                icon = { Icon(screen.icon, contentDescription = screen.title) },
-                label = { Text(screen.title) },
-                selected = currentRoute == screen.route,
-                onClick = {
-                    // Check if we are clicking the Home button
-                    if (screen == Screen.Home) {
-                        // Pop everything up to Home, ensuring Home is the only thing left
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                inclusive = false
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left items
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    leftItems.forEach { screen ->
+                        BottomNavItem(
+                            screen = screen,
+                            isSelected = currentRoute == screen.route,
+                            onClick = {
+                                handleNavigation(navController, screen)
                             }
-                            launchSingleTop = true
-                        }
-                    } else {
-                        // Normal navigation for other tabs
-                        navController.navigate(screen.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        )
                     }
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.tertiary,
-                    indicatorColor = MaterialTheme.colorScheme.tertiary,
-                    unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.6f)
-                )
-            )
+                }
+
+                // Center button - Face Analysis (larger and elevated like QRIS button)
+                val isFaceAnalysisSelected = currentRoute == Screen.FaceAnalysis.route
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .offset(y = (-12).dp)
+                        .shadow(
+                            elevation = 8.dp,
+                            shape = CircleShape,
+                            spotColor = Color.Black.copy(alpha = 0.3f)
+                        )
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFC107)) // Yellow/Amber color
+                        .clickable {
+                            navController.navigate(Screen.FaceAnalysis.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Screen.FaceAnalysis.icon,
+                        contentDescription = Screen.FaceAnalysis.title,
+                        modifier = Modifier.size(28.dp),
+                        tint = Color.White
+                    )
+                }
+
+                // Right items
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    rightItems.forEach { screen ->
+                        BottomNavItem(
+                            screen = screen,
+                            isSelected = currentRoute == screen.route,
+                            onClick = {
+                                handleNavigation(navController, screen)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomNavItem(
+    screen: Screen,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = screen.icon,
+            contentDescription = screen.title,
+            modifier = Modifier.size(24.dp),
+            tint = if (isSelected) {
+                Color(0xFFFFC107) // Yellow when selected
+            } else {
+                Color.White.copy(alpha = 0.6f)
+            }
+        )
+        Text(
+            text = screen.title,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) {
+                Color(0xFFFFC107) // Yellow when selected
+            } else {
+                Color.White.copy(alpha = 0.6f)
+            }
+        )
+    }
+}
+
+fun handleNavigation(navController: NavController, screen: Screen) {
+    if (screen == Screen.Home) {
+        navController.navigate(Screen.Home.route) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                inclusive = false
+            }
+            launchSingleTop = true
+        }
+    } else {
+        navController.navigate(screen.route) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 }
