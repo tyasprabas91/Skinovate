@@ -60,7 +60,13 @@ class AuthViewModel : ViewModel() {
                     _uiState.value = AuthUiState.Error("Sign in failed")
                 }
             } catch (e: ApiException) {
-                _uiState.value = AuthUiState.Error("Sign in failed: ${e.message}")
+                val errorMessage = when (e.statusCode) {
+                    10 -> "Aplikasi tidak dikonfigurasi dengan benar. Hubungi developer."
+                    12501 -> "Pengguna membatalkan proses sign in."
+                    7 -> "Tidak dapat terhubung ke Google. Periksa koneksi internet Anda."
+                    else -> "Gagal masuk dengan Google. Silakan coba lagi."
+                }
+                _uiState.value = AuthUiState.Error(errorMessage)
             }
         }
     }

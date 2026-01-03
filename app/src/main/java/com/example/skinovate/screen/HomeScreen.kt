@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
@@ -34,9 +35,14 @@ import com.example.skinovate.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkinovateHomeScreen(navController: NavController) {
+    val context = LocalContext.current
 
     // 1. Get Data from Repository
-    val userScan = UserRepository.lastScan
+    // Initialize UserRepository and observe lastScan
+    LaunchedEffect(Unit) {
+        UserRepository.init(context)
+    }
+    val userScan by UserRepository.lastScan.collectAsState()
     val currentUser by AuthRepository.currentUser.collectAsState()
     val username = currentUser?.name ?: "User"
 

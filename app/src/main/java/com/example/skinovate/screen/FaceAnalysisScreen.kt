@@ -26,10 +26,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.example.skinovate.data.ScanResult
 import com.example.skinovate.data.UserRepository
 import com.example.skinovate.screen.components.CameraPreview // Ensure this file exists, or comment out if using placeholder
+import com.example.skinovate.ui.components.EmptyScanHistoryState
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -39,10 +41,16 @@ enum class ScanState { HISTORY, CAMERA_PREVIEW, ANALYZING, RESULT }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaceAnalysisScreen(navController: NavController) {
+    val context = LocalContext.current
     var currentState by remember { mutableStateOf(ScanState.HISTORY) }
 
     // Use ScanResult from your data package
     var currentResult by remember { mutableStateOf<ScanResult?>(null) }
+    
+    // Initialize UserRepository
+    LaunchedEffect(Unit) {
+        UserRepository.init(context)
+    }
 
     // Mock Data for History
     val historyItems = listOf("Dec 28 - Oily", "Dec 20 - Dry", "Dec 12 - Normal")
@@ -98,7 +106,7 @@ fun FaceAnalysisScreen(navController: NavController) {
                         // 1. Update Local State
                         currentResult = newResult
                         // 2. SAVE TO REPOSITORY (This makes it visible on Home Screen!)
-                        UserRepository.lastScan = newResult
+                        UserRepository.saveScan(newResult, context)
 
                         currentState = ScanState.RESULT
                     }
@@ -134,19 +142,26 @@ fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
         Text("Scan History", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(historyItems.size) { index ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+        if (historyItems.isEmpty()) {
+            EmptyScanHistoryState(
+                onStartScan = onStartScan,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(historyItems.size) { index ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(historyItems[index], fontWeight = FontWeight.Medium)
-                        Text("View >", color = Color.Gray)
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(historyItems[index], fontWeight = FontWeight.Medium)
+                            Text("View >", color = Color.Gray)
+                        }
                     }
                 }
             }

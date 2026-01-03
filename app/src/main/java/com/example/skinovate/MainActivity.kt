@@ -10,6 +10,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.auth.AuthViewModel
 import com.example.skinovate.auth.AuthUiState
+import com.example.skinovate.data.ProductRepository
+import com.example.skinovate.data.RoutineRepository
+import com.example.skinovate.data.UserRepository
+import com.example.skinovate.data.database.DatabaseModule
+import com.example.skinovate.notifications.NotificationHelper
+import com.example.skinovate.notifications.NotificationSettingsRepository
 import com.example.skinovate.screen.AuthScreen
 import com.example.skinovate.ui.theme.SkinovateTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -23,6 +29,25 @@ class MainActivity : ComponentActivity() {
 
         // Initialize AuthRepository
         AuthRepository.init(this)
+        
+        // Initialize Database (singleton pattern - will be created on first access)
+        DatabaseModule.getDatabase(this)
+        
+        // Initialize Repositories
+        UserRepository.init(this)
+        RoutineRepository.init(this)
+        ProductRepository.init(this)
+        
+        // Setup Notification Channels
+        NotificationHelper.createNotificationChannels(this)
+        
+        // Initialize Notification Settings
+        NotificationSettingsRepository.init(this)
+        
+        // Schedule notifications if enabled
+        if (NotificationSettingsRepository.routineRemindersEnabled.value) {
+            com.example.skinovate.notifications.RoutineNotificationManager.scheduleRoutineNotifications(this)
+        }
 
         setContent {
             SkinovateTheme {

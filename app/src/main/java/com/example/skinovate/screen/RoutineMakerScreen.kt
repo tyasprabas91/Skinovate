@@ -16,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.Routine
 import com.example.skinovate.data.RoutineRepository
 import com.example.skinovate.screen.components.AddActivitySheet
+import com.example.skinovate.ui.components.EmptyRoutineState
 
 
 // Define states for the Bottom Sheet
@@ -45,6 +47,13 @@ object RoutineMakerScreen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoutineMakerScreen(navController: NavController) {
+    val context = LocalContext.current
+    
+    // Initialize RoutineRepository
+    LaunchedEffect(Unit) {
+        RoutineRepository.init(context)
+    }
+    
     // 1. Observe Live Data from Repository
     val morningRoutine by RoutineRepository.morningRoutine.collectAsState()
     val eveningRoutine by RoutineRepository.eveningRoutine.collectAsState()
@@ -152,9 +161,9 @@ fun RoutineMakerScreen(navController: NavController) {
                     onAddClick = { sheetMode = SheetMode.ADD_NEW },
                     onRemoveStep = { stepId ->
                         if (selectedRoutineType == RoutineType.MORNING) {
-                            RoutineRepository.removeStepFromMorning(stepId)
+                            RoutineRepository.removeStepFromMorning(stepId, context)
                         } else {
-                            RoutineRepository.removeStepFromEvening(stepId)
+                            RoutineRepository.removeStepFromEvening(stepId, context)
                         }
                     }
                 )
@@ -178,9 +187,9 @@ fun RoutineMakerScreen(navController: NavController) {
                     },
                     onSave = { newStep ->
                         if (selectedRoutineType == RoutineType.MORNING) {
-                            RoutineRepository.addStepToMorning(newStep)
+                            RoutineRepository.addStepToMorning(newStep, context)
                         } else {
-                            RoutineRepository.addStepToEvening(newStep)
+                            RoutineRepository.addStepToEvening(newStep, context)
                         }
                         if (activeRoutine != null) {
                             sheetMode = SheetMode.EDIT_LIST
@@ -261,26 +270,34 @@ fun EditRoutineListContent(
         Text("Starts at ${routine.time}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(24.dp))
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f, fill = false)
-        ) {
-            items(routine.steps) { step ->
-                RoutineStepItem(step = step, onRemove = { onRemoveStep(step.id) })
-            }
-            item {
-                Button(
-                    onClick = onAddClick,
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Default.Add, null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add new activity")
+        if (routine.steps.isEmpty()) {
+            // Empty state when no steps
+            EmptyRoutineState(
+                onAddStep = onAddClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
+                items(routine.steps) { step ->
+                    RoutineStepItem(step = step, onRemove = { onRemoveStep(step.id) })
+                }
+                item {
+                    Button(
+                        onClick = onAddClick,
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Add, null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add new activity")
+                    }
                 }
             }
         }

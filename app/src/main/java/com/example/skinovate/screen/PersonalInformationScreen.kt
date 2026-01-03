@@ -292,7 +292,7 @@ fun PersonalInformationScreen(navController: NavController) {
                             errorMessage = "Gagal memperbarui informasi"
                         }
                     } catch (e: Exception) {
-                        errorMessage = "Terjadi kesalahan: ${e.message}"
+                        errorMessage = com.example.skinovate.utils.ErrorMessageHelper.getErrorMessage(e)
                     } finally {
                         isLoading = false
                     }

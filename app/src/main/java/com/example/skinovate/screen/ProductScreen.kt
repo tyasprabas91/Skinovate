@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.ProductRepository
+import com.example.skinovate.ui.components.EmptyProductsState
 
 // Helper function to get category color
 @Composable
@@ -153,26 +154,13 @@ fun ProductScreen(navController: NavController) {
     ) { padding ->
         if (displayedProducts.isEmpty()) {
             // Empty state
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "No products found",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Gray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Try adjusting your search or filters",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                }
-            }
+            EmptyProductsState(
+                onRefresh = {
+                    searchQuery = ""
+                    selectedCategory = null
+                },
+                modifier = Modifier.padding(padding)
+            )
         } else {
             // 3. The 2-Column Grid
             LazyVerticalGrid(
