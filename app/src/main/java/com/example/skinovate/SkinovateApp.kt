@@ -32,6 +32,7 @@ import com.example.skinovate.screen.NotificationSettingsScreen
 import com.example.skinovate.screen.PrivacySettingsScreen
 import com.example.skinovate.screen.AboutScreen
 import com.example.skinovate.screen.HelpSupportScreen
+import com.example.skinovate.screen.FAQScreen
 import com.example.skinovate.auth.AuthViewModel
 import android.content.Context
 
@@ -115,6 +116,10 @@ fun SkinovateApp(
 
             composable(Screen.HelpSupport.route) {
                 HelpSupportScreen(navController = navController)
+            }
+            
+            composable(Screen.FAQ.route) {
+                FAQScreen(navController = navController)
             }
         }
     }

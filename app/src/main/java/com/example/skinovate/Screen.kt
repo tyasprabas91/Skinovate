@@ -26,4 +26,5 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object PrivacySettings : Screen("privacy_settings", "Privasi", Icons.Default.Lock)
     object About : Screen("about", "Tentang", Icons.Default.Info)
     object HelpSupport : Screen("help_support", "Bantuan", Icons.Default.Info)
+    object FAQ : Screen("faq", "FAQ", Icons.Default.Info)
 }

@@ -1,10 +1,13 @@
 package com.example.skinovate.screen
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -12,13 +15,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.skinovate.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpSupportScreen(navController: NavController) {
+    val context = LocalContext.current
+    
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -32,7 +39,7 @@ fun HelpSupportScreen(navController: NavController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -96,14 +103,18 @@ fun HelpSupportScreen(navController: NavController) {
                 icon = Icons.Default.Email,
                 title = "Email Support",
                 description = "support@skinovate.com",
-                onClick = { /* TODO: Open email client */ }
+                onClick = {
+                    openEmailClient(context, "support@skinovate.com", "Pertanyaan tentang Skinovate")
+                }
             )
 
             ContactCard(
                 icon = Icons.Default.Info,
                 title = "FAQ Lengkap",
                 description = "Lihat semua pertanyaan umum",
-                onClick = { /* TODO: Open FAQ page */ }
+                onClick = {
+                    navController.navigate(Screen.FAQ.route)
+                }
             )
         }
     }
@@ -180,3 +191,15 @@ fun ContactCard(
     }
 }
 
+private fun openEmailClient(context: Context, email: String, subject: String) {
+    try {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+        }
+        context.startActivity(Intent.createChooser(intent, "Kirim Email"))
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}

@@ -1,27 +1,45 @@
 package com.example.skinovate.screen
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.skinovate.utils.DataExportHelper
+import com.example.skinovate.utils.ErrorMessageHelper
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacySettingsScreen(navController: NavController) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var dataSharingEnabled by remember { mutableStateOf(false) }
     var analyticsEnabled by remember { mutableStateOf(true) }
     var personalizedAdsEnabled by remember { mutableStateOf(false) }
+    
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var exportInProgress by remember { mutableStateOf(false) }
+    var deleteInProgress by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    var snackbarMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -33,7 +51,7 @@ fun PrivacySettingsScreen(navController: NavController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -103,23 +121,97 @@ fun PrivacySettingsScreen(navController: NavController) {
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                     )
                     Button(
-                        onClick = { /* TODO: Implement data export */ },
+                        onClick = {
+                            scope.launch {
+                                exportInProgress = true
+                                val result = DataExportHelper.exportUserData(context)
+                                exportInProgress = false
+                                
+                                result.onSuccess { file ->
+                                    snackbarHostState.showSnackbar("Data berhasil diekspor ke: ${file.name}")
+                                    // Optionally share the file
+                                    shareFile(context, file)
+                                }.onFailure { exception ->
+                                    snackbarHostState.showSnackbar(ErrorMessageHelper.getErrorMessage(exception))
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
+                        enabled = !exportInProgress && !deleteInProgress,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Unduh Data Saya")
+                        if (exportInProgress) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(if (exportInProgress) "Mengekspor..." else "Unduh Data Saya")
                     }
                     OutlinedButton(
-                        onClick = { /* TODO: Implement data deletion */ },
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = { showDeleteConfirmDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !exportInProgress && !deleteInProgress
                     ) {
-                        Text("Hapus Semua Data", color = MaterialTheme.colorScheme.error)
+                        if (deleteInProgress) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(
+                            if (deleteInProgress) "Menghapus..." else "Hapus Semua Data",
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             }
         }
+        
+        // Delete Confirmation Dialog
+        if (showDeleteConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmDialog = false },
+                title = { Text("Hapus Semua Data?") },
+                text = {
+                    Text("Tindakan ini akan menghapus semua data Anda termasuk:\n\n" +
+                            "• Riwayat scan wajah\n" +
+                            "• Rutinitas skincare\n" +
+                            "• Pengaturan akun\n\n" +
+                            "Tindakan ini tidak dapat dibatalkan.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteConfirmDialog = false
+                            scope.launch {
+                                deleteInProgress = true
+                                val result = DataExportHelper.deleteAllUserData(context)
+                                deleteInProgress = false
+                                
+                                result.onSuccess {
+                                    snackbarHostState.showSnackbar("Semua data berhasil dihapus")
+                                }.onFailure { exception ->
+                                    snackbarHostState.showSnackbar(ErrorMessageHelper.getErrorMessage(exception))
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Hapus", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                        Text("Batal")
+                    }
+                }
+            )
+        }
+        
     }
 }
 
@@ -164,3 +256,17 @@ fun PrivacyOptionCard(
     }
 }
 
+private fun shareFile(context: Context, file: java.io.File) {
+    try {
+        val uri = Uri.fromFile(file)
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "application/json"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Bagikan data ekspor"))
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}

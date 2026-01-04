@@ -30,10 +30,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.example.skinovate.data.ScanResult
 import com.example.skinovate.data.UserRepository
-import com.example.skinovate.screen.components.CameraPreview // Ensure this file exists, or comment out if using placeholder
+import com.example.skinovate.screen.components.CameraPreview
+import com.example.skinovate.screen.components.CameraController
+import com.example.skinovate.screen.components.SkinAnalyzer
+import com.example.skinovate.screen.components.SkinAnalysisResult
 import com.example.skinovate.ui.components.EmptyScanHistoryState
 import kotlinx.coroutines.delay
-import kotlin.random.Random
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import java.io.File
 
 // The 4 States of this Screen
 enum class ScanState { HISTORY, CAMERA_PREVIEW, ANALYZING, RESULT }
@@ -46,6 +56,7 @@ fun FaceAnalysisScreen(navController: NavController) {
 
     // Use ScanResult from your data package
     var currentResult by remember { mutableStateOf<ScanResult?>(null) }
+    var capturedImageFile by remember { mutableStateOf<File?>(null) }
     
     // Initialize UserRepository
     LaunchedEffect(Unit) {
@@ -86,21 +97,21 @@ fun FaceAnalysisScreen(navController: NavController) {
                     onStartScan = { currentState = ScanState.CAMERA_PREVIEW }
                 )
                 ScanState.CAMERA_PREVIEW -> CameraView(
-                    onCapture = { currentState = ScanState.ANALYZING }
+                    onCapture = { imageFile ->
+                        capturedImageFile = imageFile
+                        currentState = ScanState.ANALYZING
+                    }
                 )
                 ScanState.ANALYZING -> AnalyzingView(
-                    onFinished = {
-                        // --- THE BRAIN: GENERATE RANDOM RESULT ---
-                        val score = Random.nextInt(65, 98)
-                        val type = listOf("Oily", "Dry", "Combination", "Sensitive").random()
-
-                        // Create the result object
+                    imageFile = capturedImageFile,
+                    onFinished = { result ->
+                        // Convert SkinAnalysisResult to ScanResult
                         val newResult = ScanResult(
-                            score = score,
-                            skinType = type,
-                            acnePercentage = Random.nextInt(5, 30),
-                            dryPercentage = Random.nextInt(5, 30),
-                            recommendation = if(score > 85) "Maintain current routine" else "Add Hydration Serum"
+                            score = result.score,
+                            skinType = result.skinType,
+                            acnePercentage = result.acnePercentage,
+                            dryPercentage = result.dryPercentage,
+                            recommendation = result.recommendation
                         )
 
                         // 1. Update Local State
@@ -171,8 +182,13 @@ fun HistoryView(historyItems: List<String>, onStartScan: () -> Unit) {
 
 // --- 2. CAMERA VIEW ---
 @Composable
-fun CameraView(onCapture: () -> Unit) {
+fun CameraView(onCapture: (File) -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val executor = ContextCompat.getMainExecutor(context)
     var hasPermission by remember { mutableStateOf(false) }
+    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+    var cameraController by remember { mutableStateOf<CameraController?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -183,9 +199,32 @@ fun CameraView(onCapture: () -> Unit) {
         launcher.launch(android.Manifest.permission.CAMERA)
     }
 
+    // Initialize camera controller
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) {
+            val controller = CameraController(context, lifecycleOwner, executor)
+            cameraController = controller
+            controller.initialize { provider ->
+                // Camera provider initialized
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (hasPermission) {
-            CameraPreview(modifier = Modifier.fillMaxSize())
+            // Create ImageCapture
+            val capture = remember {
+                ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .build()
+            }
+            
+            imageCapture = capture
+            
+            CameraPreview(
+                modifier = Modifier.fillMaxSize(),
+                imageCapture = capture
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Camera permission needed", color = Color.White)
@@ -204,7 +243,23 @@ fun CameraView(onCapture: () -> Unit) {
                     .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape)
             )
             Button(
-                onClick = onCapture,
+                onClick = {
+                    val capture = imageCapture
+                    val controller = cameraController
+                    if (capture != null && controller != null) {
+                        val imageFile = controller.createImageFile(context)
+                        controller.takePicture(
+                            outputFile = imageFile,
+                            onImageSaved = { _ ->
+                                onCapture(imageFile)
+                            },
+                            onError = { exception ->
+                                exception.printStackTrace()
+                                // Handle error - could show error message
+                            }
+                        )
+                    }
+                },
                 modifier = Modifier.padding(bottom = 48.dp).size(80.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
@@ -217,11 +272,41 @@ fun CameraView(onCapture: () -> Unit) {
 
 // --- 3. ANALYZING VIEW ---
 @Composable
-fun AnalyzingView(onFinished: () -> Unit) {
-    LaunchedEffect(Unit) {
-        delay(2000)
-        onFinished()
+fun AnalyzingView(
+    imageFile: File?,
+                    onFinished: (SkinAnalysisResult) -> Unit
+) {
+    val context = LocalContext.current
+    val skinAnalyzer = remember { SkinAnalyzer() }
+    
+    LaunchedEffect(imageFile) {
+        if (imageFile != null && imageFile.exists()) {
+            // Analyze skin using SkinAnalyzer
+            val result = withContext(Dispatchers.IO) {
+                skinAnalyzer.analyzeSkin(imageFile)
+            }
+            onFinished(result)
+        } else {
+            // If no image file, use default result
+            delay(1500) // Small delay untuk UX
+            onFinished(
+                SkinAnalysisResult(
+                    score = 75,
+                    skinType = "Normal",
+                    acnePercentage = 10,
+                    dryPercentage = 15,
+                    recommendation = "Lakukan scan ulang dengan pencahayaan yang lebih baik"
+                )
+            )
+        }
     }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            skinAnalyzer.close()
+        }
+    }
+    
     Box(
         modifier = Modifier.fillMaxSize().background(Color.Black),
         contentAlignment = Alignment.Center
