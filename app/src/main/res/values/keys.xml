@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <!--
+        IMPORTANT: Add this file to .gitignore!
+
+        To get API key:
+        1. DeepAI API: https://deepai.org/
+           - Daftar dan dapatkan API key dari dashboard
+           - DeepAI menyediakan free tier untuk testing
+
+        Replace YOUR_API_KEY_HERE with your actual API key
+        -->
+        <string name="groq_api_key">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</string>
+</resources>
