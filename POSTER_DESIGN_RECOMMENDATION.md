@@ -17,31 +17,25 @@
 
 Berdasarkan analisis codebase, berikut adalah **fitur utama** aplikasi:
 
-### 1. **Analisis Kulit dengan AI** 🤖✨
-- **Skin Questionnaire** - Analisis tipe kulit melalui pertanyaan
-- **AI-Powered Analysis** - Penjelasan dan rekomendasi personalisasi menggunakan AI (Groq)
-- **Detail Analysis** - Score, tipe kulit, sensitivitas, elastisitas, dll
-- **Recommended Routines** - Rekomendasi rutinitas skincare berdasarkan analisis
-
-### 2. **Routine Maker** 📅
+### 1. **Routine Maker** 📅
 - **Morning & Evening Routines** - Buat rutinitas skincare pagi dan malam
 - **Custom Steps** - Tambah/edit activity dengan produk dan duration
 - **Timer untuk Activity** - Timer jeda antar activity dengan notifikasi
 - **Routine Recommendations** - Rekomendasi rutinitas siap pakai
 
-### 3. **Product Recommendations** 🛍️
+### 2. **Product Recommendations** 🛍️
 - **Product Catalog** - Database produk skincare lengkap
 - **Filter & Search** - Filter berdasarkan kategori, pencarian produk
 - **Personalized Recommendations** - Rekomendasi produk berdasarkan tipe kulit
 - **Product Details** - Detail produk, harga, rating, target skin conditions
 
-### 4. **Learning/Edukasi** 📚
+### 3. **Learning/Edukasi** 📚
 - **Skin Problem Library** - Library masalah kulit (jerawat, flek hitam, dll)
 - **Detailed Explanations** - Penjelasan lengkap setiap masalah kulit
 - **Product Recommendations** - Rekomendasi produk untuk setiap masalah
 - **Tips & Treatment** - Tips pencegahan dan treatment
 
-### 5. **Chatbot Konsultasi** 💬
+### 4. **Chatbot Konsultasi** 💬
 - **AI Chatbot** - Konsultasi skincare dengan AI (Groq API)
 - **Personalized Advice** - Saran personalisasi berdasarkan permasalahan
 - **24/7 Available** - Tersedia kapan saja
@@ -138,30 +132,25 @@ Berdasarkan analisis codebase, berikut adalah **fitur utama** aplikasi:
 
 **Format: Icon + Feature Name + Short Description**
 
-#### **Feature 1: Analisis Kulit dengan AI** 🤖
-- **Icon:** 🧠 atau 🔬 atau AI brain icon
-- **Title:** "Analisis Kulit Cerdas"
-- **Description:** "Ketahui tipe kulitmu dengan AI analysis"
-
-#### **Feature 2: Routine Maker** 📅
+#### **Feature 1: Routine Maker** 📅
 - **Icon:** 📋 atau ⏰ atau calendar icon
 - **Title:** "Rutinitas Personalisasi"
 - **Description:** "Buat rutinitas skincare pagi & malam sesuai kebutuhan"
 
-#### **Feature 3: Rekomendasi Produk** 🛍️
+#### **Feature 2: Rekomendasi Produk** 🛍️
 - **Icon:** 💎 atau ✨ atau product icon
 - **Title:** "Rekomendasi Produk Terbaik"
 - **Description:** "Dapatkan rekomendasi produk yang cocok untuk kulitmu"
+
+#### **Feature 3: Learning/Edukasi** 📚
+- **Icon:** 📖 atau 🎓 atau book icon
+- **Title:** "Edukasi Skincare"
+- **Description:** "Pelajari masalah kulit dan solusinya"
 
 #### **Feature 4: Chatbot Konsultasi** 💬
 - **Icon:** 💬 atau 🤖 atau chat icon
 - **Title:** "Konsultasi AI 24/7"
 - **Description:** "Tanya apapun tentang skincare dengan chatbot AI"
-
-#### **Feature 5: Learning/Edukasi** 📚
-- **Icon:** 📖 atau 🎓 atau book icon
-- **Title:** "Edukasi Skincare"
-- **Description:** "Pelajari masalah kulit dan solusinya"
 
 ---
 
@@ -200,13 +189,13 @@ Gunakan bullet points atau highlight boxes:
 
 #### **Color Scheme:**
 - **Primary Colors:** 
-  - Soft pink/peach (skincare theme)
   - Teal/turquoise (health & wellness)
+  - Navy blue/dark blue (professional & trustworthy)
   - White/light gray (clean & minimal)
 - **Accent Colors:**
-  - Gold/yellow untuk highlights
+  - Orange/amber untuk highlights (energy & warmth)
   - Green untuk health/positive
-  - Purple untuk premium/AI
+  - Light blue untuk freshness
 
 #### **Typography:**
 - **Headline:** Bold, modern sans-serif (e.g., Montserrat, Poppins)

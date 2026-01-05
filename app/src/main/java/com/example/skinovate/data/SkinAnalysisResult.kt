@@ -2,7 +2,6 @@ package com.example.skinovate.data
 
 /**
  * A simple data model for the UI to display analysis results.
- * Shared between GeminiRepository, SkinAnalyzer, and the UI.
  */
 data class SkinAnalysisResult(
     val score: Int,
