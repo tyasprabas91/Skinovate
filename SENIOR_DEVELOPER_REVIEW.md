@@ -103,7 +103,7 @@ catch (e: Exception) {
 **Current Implementation:**
 ```xml
 <!-- api_keys.xml - Already in .gitignore ✅ -->
-<string name="groq_api_key">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</string>
+<string name="groq_api_key">[API_KEY_REMOVED]gZtwdtYrRbqD7dc7wg5oWGdyb3FY9bxvSSbfnvysQPgoT3lJ4CI8</string>
 ```
 
 **Issues:**
