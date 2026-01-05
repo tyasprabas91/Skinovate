@@ -29,6 +29,8 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GEMINI_API_KEY", "\"AIzaSyCS488h6xEFCPEje6k4rqbvSvRMgG8IeTE\"")
         
         // Enable vector drawables
         vectorDrawables {
@@ -85,6 +87,7 @@ android {
     
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     
     packaging {

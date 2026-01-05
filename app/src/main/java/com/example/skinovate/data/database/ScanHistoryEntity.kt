@@ -21,24 +21,25 @@ data class ScanHistoryEntity(
     val acnePercentage: Int,
     val dryPercentage: Int,
     val recommendation: String,
+    val tipsString: String = "", // Store as string for simplicity
     val dateTimestamp: Long = System.currentTimeMillis() // Store as timestamp for sorting
 ) {
     /**
      * Convert Entity to Domain Model
      */
     fun toScanResult(): ScanResult {
-        val date = if (dateTimestamp > 0) {
-            formatDate(dateTimestamp)
-        } else {
-            "Today"
-        }
-        
+        val date = formatDate(dateTimestamp)
+
+        // Convert "Tip1|Tip2" string back to a List
+        val tipsList = if (tipsString.isEmpty()) emptyList() else tipsString.split("|")
+
         return ScanResult(
             score = score,
             skinType = skinType,
             acnePercentage = acnePercentage,
             dryPercentage = dryPercentage,
             recommendation = recommendation,
+            tips = tipsList, // <--- Map it here
             date = date
         )
     }
@@ -62,7 +63,7 @@ data class ScanHistoryEntity(
             else -> dateStr
         }
     }
-    
+
     companion object {
         /**
          * Convert Domain Model to Entity

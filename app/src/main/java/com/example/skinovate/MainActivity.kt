@@ -18,7 +18,6 @@ import com.example.skinovate.screen.AuthScreen
 import com.example.skinovate.ui.theme.SkinovateTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
 

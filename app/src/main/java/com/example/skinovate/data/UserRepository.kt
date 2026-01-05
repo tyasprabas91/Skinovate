@@ -20,6 +20,7 @@ data class ScanResult(
     val acnePercentage: Int,
     val dryPercentage: Int,
     val recommendation: String,
+    val tips: List<String> = emptyList(),
     val date: String = "Today" // Default value
 )
 
