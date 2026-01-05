@@ -23,10 +23,29 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.example.skinovate.data.Product
 import com.example.skinovate.data.ProductRepository
 import com.example.skinovate.ui.components.EmptyProductsState
+import androidx.compose.runtime.collectAsState
+
+/**
+ * Filter type enum
+ */
+enum class FilterType {
+    SKIN_TYPE,
+    BENEFIT,
+    INGREDIENT
+}
+
+/**
+ * Filter option data class
+ */
+data class FilterOption(
+    val name: String,
+    val type: FilterType
+)
 
 // Helper function to get category color
 @Composable
@@ -65,30 +84,129 @@ fun getCategoryTextColor(category: String): Color {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductScreen(navController: NavController) {
+    val context = LocalContext.current
+    
+    // Initialize ProductRepository
+    LaunchedEffect(Unit) {
+        ProductRepository.init(context)
+    }
+    
+    // Use StateFlow for reactive updates
+    val allProducts by ProductRepository.allProductsFlow.collectAsState()
 
     // --- State Variables ---
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedFilter by remember { mutableStateOf<String?>(null) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
     val sheetState = rememberModalBottomSheetState()
 
     // --- Get Unique Categories Dynamically ---
-    val allCategories = remember {
-        ProductRepository.allProducts.map { it.category }.distinct().sorted()
+    val allCategories = remember(allProducts) {
+        allProducts.map { it.category }.distinct().sorted()
+    }
+
+    // --- Available Filters ---
+    val availableFilters = remember {
+        listOf(
+            // Skin Types
+            FilterOption("Oily Skin", FilterType.SKIN_TYPE),
+            FilterOption("Dry Skin", FilterType.SKIN_TYPE),
+            FilterOption("Sensitive Skin", FilterType.SKIN_TYPE),
+            FilterOption("Combination Skin", FilterType.SKIN_TYPE),
+            // Benefits
+            FilterOption("Barrier Repair", FilterType.BENEFIT),
+            FilterOption("Pore Minimizing", FilterType.BENEFIT),
+            FilterOption("Acne", FilterType.BENEFIT),
+            FilterOption("Brightening", FilterType.BENEFIT),
+            FilterOption("Anti-Aging", FilterType.BENEFIT),
+            // Ingredients
+            FilterOption("Niacinamide", FilterType.INGREDIENT),
+            FilterOption("Retinoid", FilterType.INGREDIENT),
+            FilterOption("Retinol", FilterType.INGREDIENT),
+            FilterOption("Ceramide", FilterType.INGREDIENT),
+            FilterOption("Salicylic Acid", FilterType.INGREDIENT),
+            FilterOption("AHA", FilterType.INGREDIENT),
+            FilterOption("BHA", FilterType.INGREDIENT),
+            FilterOption("Hyaluronic Acid", FilterType.INGREDIENT),
+            FilterOption("Vitamin C", FilterType.INGREDIENT),
+        )
     }
 
     // --- Filtering Logic ---
-    val displayedProducts = remember(searchQuery, selectedCategory) {
-        ProductRepository.allProducts.filter { product ->
-            val matchesSearch = product.name.contains(searchQuery, ignoreCase = true) ||
+    val displayedProducts = remember(allProducts, searchQuery, selectedCategory, selectedFilter) {
+        allProducts.filter { product ->
+            val matchesSearch = searchQuery.isEmpty() || 
+                    product.name.contains(searchQuery, ignoreCase = true) ||
                     product.brand.contains(searchQuery, ignoreCase = true) ||
                     product.description.contains(searchQuery, ignoreCase = true)
 
             val matchesCategory = selectedCategory == null ||
                     product.category.equals(selectedCategory, ignoreCase = true)
 
-            matchesSearch && matchesCategory
+            val matchesFilter = selectedFilter == null || when {
+                selectedFilter == "Oily Skin" -> 
+                    product.targetSkinConditions.any { it.contains("oily", ignoreCase = true) } ||
+                    product.description.contains("oily", ignoreCase = true)
+                selectedFilter == "Dry Skin" -> 
+                    product.targetSkinConditions.any { it.contains("dry", ignoreCase = true) } ||
+                    product.description.contains("dry", ignoreCase = true)
+                selectedFilter == "Sensitive Skin" -> 
+                    product.targetSkinConditions.any { it.contains("sensitive", ignoreCase = true) } ||
+                    product.description.contains("sensitive", ignoreCase = true)
+                selectedFilter == "Combination Skin" -> 
+                    product.targetSkinConditions.any { it.contains("combination", ignoreCase = true) } ||
+                    product.description.contains("combination", ignoreCase = true)
+                selectedFilter == "Barrier Repair" -> 
+                    product.description.contains("barrier", ignoreCase = true) ||
+                    product.description.contains("repair", ignoreCase = true) ||
+                    product.targetSkinConditions.any { it.contains("barrier", ignoreCase = true) }
+                selectedFilter == "Pore Minimizing" -> 
+                    product.description.contains("pore", ignoreCase = true) ||
+                    product.targetSkinConditions.any { it.contains("pore", ignoreCase = true) }
+                selectedFilter == "Acne" -> 
+                    product.targetSkinConditions.any { it.contains("acne", ignoreCase = true) } ||
+                    product.description.contains("acne", ignoreCase = true)
+                selectedFilter == "Brightening" -> 
+                    product.description.contains("bright", ignoreCase = true) ||
+                    product.description.contains("lighten", ignoreCase = true) ||
+                    product.description.contains("glow", ignoreCase = true)
+                selectedFilter == "Anti-Aging" -> 
+                    product.description.contains("aging", ignoreCase = true) ||
+                    product.description.contains("anti-aging", ignoreCase = true) ||
+                    product.targetSkinConditions.any { it.contains("aging", ignoreCase = true) }
+                selectedFilter == "Niacinamide" -> 
+                    product.name.contains("niacinamide", ignoreCase = true) ||
+                    product.description.contains("niacinamide", ignoreCase = true)
+                selectedFilter == "Retinoid" || selectedFilter == "Retinol" -> 
+                    product.name.contains("retinol", ignoreCase = true) ||
+                    product.name.contains("retinoid", ignoreCase = true) ||
+                    product.description.contains("retinol", ignoreCase = true) ||
+                    product.description.contains("retinoid", ignoreCase = true)
+                selectedFilter == "Ceramide" -> 
+                    product.name.contains("ceramide", ignoreCase = true) ||
+                    product.description.contains("ceramide", ignoreCase = true)
+                selectedFilter == "Salicylic Acid" -> 
+                    product.description.contains("salicylic", ignoreCase = true)
+                selectedFilter == "AHA" -> 
+                    product.description.contains("aha", ignoreCase = true) ||
+                    product.description.contains("glycolic", ignoreCase = true) ||
+                    product.description.contains("lactic", ignoreCase = true)
+                selectedFilter == "BHA" -> 
+                    product.description.contains("bha", ignoreCase = true) ||
+                    product.description.contains("salicylic", ignoreCase = true)
+                selectedFilter == "Hyaluronic Acid" -> 
+                    product.description.contains("hyaluronic", ignoreCase = true) ||
+                    product.description.contains("hydrat", ignoreCase = true)
+                selectedFilter == "Vitamin C" -> 
+                    product.name.contains("vitamin c", ignoreCase = true) ||
+                    product.description.contains("vitamin c", ignoreCase = true) ||
+                    product.description.contains("ascorbic", ignoreCase = true)
+                else -> true
+            }
+
+            matchesSearch && matchesCategory && matchesFilter
         }
     }
 
@@ -124,7 +242,13 @@ fun ProductScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 2. Filter Chips (Horizontal Scroll)
+                // 2. Category Filter Chips (Horizontal Scroll)
+                Text(
+                    text = "Kategori",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         FilterChip(
@@ -149,6 +273,48 @@ fun ProductScreen(navController: NavController) {
                         )
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // 3. Detail Filter Chips (Horizontal Scroll)
+                Text(
+                    text = "Filter Lanjutan",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        FilterChip(
+                            selected = selectedFilter == null,
+                            onClick = { selectedFilter = null },
+                            label = { Text("Semua") }
+                        )
+                    }
+                    items(availableFilters) { filter ->
+                        FilterChip(
+                            selected = selectedFilter == filter.name,
+                            onClick = {
+                                selectedFilter = if (selectedFilter == filter.name) null else filter.name
+                            },
+                            label = { Text(filter.name) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = when (filter.type) {
+                                    FilterType.SKIN_TYPE -> Color(0xFFE3F2FD)
+                                    FilterType.BENEFIT -> Color(0xFFE8F5E9)
+                                    FilterType.INGREDIENT -> Color(0xFFFFF3E0)
+                                },
+                                containerColor = Color(0xFFF5F5F5),
+                                selectedLabelColor = when (filter.type) {
+                                    FilterType.SKIN_TYPE -> Color(0xFF1976D2)
+                                    FilterType.BENEFIT -> Color(0xFF388E3C)
+                                    FilterType.INGREDIENT -> Color(0xFFE65100)
+                                },
+                                labelColor = Color.Gray
+                            )
+                        )
+                    }
+                }
             }
         }
     ) { padding ->
@@ -158,6 +324,7 @@ fun ProductScreen(navController: NavController) {
                 onRefresh = {
                     searchQuery = ""
                     selectedCategory = null
+                    selectedFilter = null
                 },
                 modifier = Modifier.padding(padding)
             )

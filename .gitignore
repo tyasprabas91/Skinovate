@@ -1,4 +1,7 @@
 *.iml
+
+# API Keys (sensitive)
+app/src/main/res/values/api_keys.xml
 .gradle
 /local.properties
 /.idea/caches

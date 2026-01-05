@@ -10,8 +10,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +36,10 @@ import com.example.skinovate.data.ProductRepository
 import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.data.ScanResult
 import com.example.skinovate.data.UserRepository
+import com.example.skinovate.data.RoutineRepository
+import com.example.skinovate.data.Routine
 import com.example.skinovate.navigation.Screen
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,10 +50,15 @@ fun SkinovateHomeScreen(navController: NavController) {
     // Initialize UserRepository and observe lastScan
     LaunchedEffect(Unit) {
         UserRepository.init(context)
+        RoutineRepository.init(context)
     }
     val userScan by UserRepository.lastScan.collectAsState()
     val currentUser by AuthRepository.currentUser.collectAsState()
     val username = currentUser?.name ?: "User"
+    
+    // Get routines
+    val morningRoutine by RoutineRepository.morningRoutine.collectAsState()
+    val eveningRoutine by RoutineRepository.eveningRoutine.collectAsState()
 
     // If we have a scan, filter products by that skin type. Otherwise show "All".
     val currentSkinCondition = userScan?.skinType ?: "All"
@@ -78,12 +92,19 @@ fun SkinovateHomeScreen(navController: NavController) {
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         HeaderSection(username = username)
-        RoutineSection(navController)
+        RoutineSection(
+            navController = navController,
+            morningRoutine = morningRoutine,
+            eveningRoutine = eveningRoutine
+        )
 
-        // 3. Pass the scan data to the Face Section
-        FaceAnalysisSection(navController, userScan)
+        // 3. Pass the scan data to the Questionnaire Section
+        SkinQuestionnaireSection(navController, userScan)
+        
+        // 4. Features Section
+        FeaturesSection(navController)
 
-        // 4. Pass click listener to Products
+        // 5. Pass click listener to Products
         HighlightedProductsSection(
             products = highlightedProducts,
             onProductClick = { product -> selectedProduct = product }
@@ -123,8 +144,91 @@ fun HeaderSection(username: String) {
     }
 }
 
+/**
+ * Parse time string seperti "08:00 AM" ke Calendar untuk hari ini
+ */
+private fun parseTimeForToday(timeString: String): Calendar {
+    val calendar = Calendar.getInstance()
+    try {
+        val parts = timeString.split(" ")
+        val timePart = parts[0] // "08:00"
+        val amPm = if (parts.size > 1) parts[1] else "AM" // "AM" or "PM"
+        
+        val timeParts = timePart.split(":")
+        var hour = timeParts[0].toInt()
+        val minute = timeParts[1].toInt()
+        
+        // Convert to 24-hour format
+        if (amPm.equals("PM", ignoreCase = true) && hour != 12) {
+            hour += 12
+        } else if (amPm.equals("AM", ignoreCase = true) && hour == 12) {
+            hour = 0
+        }
+        
+        calendar.set(Calendar.HOUR_OF_DAY, hour)
+        calendar.set(Calendar.MINUTE, minute)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+    } catch (e: Exception) {
+        // Default to 8:00 AM if parsing fails
+        calendar.set(Calendar.HOUR_OF_DAY, 8)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+    }
+    
+    return calendar
+}
+
+/**
+ * Determine next routine based on current time
+ * Returns null if both routines are empty
+ * Logic:
+ * - If morning time hasn't passed, show morning
+ * - If morning time has passed, show evening (even if evening has also passed)
+ */
+private fun getNextRoutine(morningRoutine: Routine, eveningRoutine: Routine): Routine? {
+    val now = Calendar.getInstance()
+    
+    // Check if routines have steps
+    val morningHasSteps = morningRoutine.steps.isNotEmpty()
+    val eveningHasSteps = eveningRoutine.steps.isNotEmpty()
+    
+    // If both are empty, return null
+    if (!morningHasSteps && !eveningHasSteps) {
+        return null
+    }
+    
+    // If only one has steps, return that one
+    if (morningHasSteps && !eveningHasSteps) {
+        return morningRoutine
+    }
+    if (!morningHasSteps && eveningHasSteps) {
+        return eveningRoutine
+    }
+    
+    // Both have steps - determine which is next
+    val morningTime = parseTimeForToday(morningRoutine.time)
+    
+    // If morning time has passed today (or is exactly now), show evening
+    // Otherwise, show morning
+    return if (now.timeInMillis >= morningTime.timeInMillis) {
+        eveningRoutine
+    } else {
+        morningRoutine
+    }
+}
+
 @Composable
-fun RoutineSection(navController: NavController) {
+fun RoutineSection(
+    navController: NavController,
+    morningRoutine: Routine,
+    eveningRoutine: Routine
+) {
+    val nextRoutine = remember(morningRoutine, eveningRoutine) {
+        getNextRoutine(morningRoutine, eveningRoutine)
+    }
+    
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = "Routine",
@@ -133,56 +237,48 @@ fun RoutineSection(navController: NavController) {
             fontWeight = FontWeight.Bold
         )
 
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { navController.navigate(Screen.RoutineMaker.route) }
-        ) {
-            Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                Column {
-                    Text(
-                        text = "Next Routine",
-                        color = Color.White.copy(alpha = 0.8f),
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "08:00 A.M.",
-                        color = Color.White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Apply Skincare",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+        // Only show card if there's a next routine
+        if (nextRoutine != null) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+                    Column {
+                        Text(
+                            text = "Next Routine",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = nextRoutine.time,
+                            color = Color.White,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = nextRoutine.title,
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
-                Text(
-                    text = "Edit Routine →",
-                    color = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(y = 12.dp)
-                )
             }
         }
     }
 }
 
 @Composable
-fun FaceAnalysisSection(navController: NavController, scanResult: ScanResult?) {
+fun SkinQuestionnaireSection(navController: NavController, scanResult: ScanResult?) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { navController.navigate(Screen.FaceAnalysis.route) }
+        modifier = Modifier.fillMaxWidth()
     ) {
         Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             if (scanResult == null) {
@@ -195,20 +291,20 @@ fun FaceAnalysisSection(navController: NavController, scanResult: ScanResult?) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Start Scan",
+                        text = "Start Analysis",
                         color = Color.White,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Discover your skin type",
+                        text = "Jawab pertanyaan untuk mengetahui tipe kulit Anda",
                         color = Color.White,
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
             } else {
-                // STATE B: Result Exists
+                // STATE B: Result Exists - Only show last scan, score, and skin type
                 Column {
                     Text(
                         text = "Last Scan: ${scanResult.date}",
@@ -229,20 +325,139 @@ fun FaceAnalysisSection(navController: NavController, scanResult: ScanResult?) {
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 18.sp
                     )
-                    Text(
-                        text = scanResult.recommendation,
-                        color = Color.White.copy(alpha = 0.9f),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
                 }
             }
+        }
+    }
+}
 
-            Text(
-                text = if(scanResult == null) "Start ->" else "New Scan ->",
-                color = Color.White,
+@Composable
+fun FeaturesSection(navController: NavController) {
+    val features = listOf(
+        FeatureItem(
+            title = "Analisis Kulit",
+            description = "Jawab pertanyaan untuk mengetahui tipe kulitmu",
+            icon = Icons.Default.Face,
+            color = Color(0xFF264653),
+            route = Screen.SkinQuestionnaire.route
+        ),
+        FeatureItem(
+            title = "Routine Maker",
+            description = "Buat rutinitas skincare pagi dan malam",
+            icon = Icons.Default.List,
+            color = Color(0xFF2A9D8F),
+            route = Screen.RoutineMaker.route
+        ),
+        FeatureItem(
+            title = "Product Recommendations",
+            description = "Dapatkan rekomendasi produk skincare",
+            icon = Icons.Default.ShoppingCart,
+            color = Color(0xFFE9C46A),
+            route = Screen.Products.route
+        )
+    )
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Fitur Aplikasi",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.Bold
+        )
+        
+        features.forEach { feature ->
+            FeatureCardCompact(
+                feature = feature,
+                onClick = {
+                    navController.navigate(feature.route) {
+                        popUpTo(Screen.Home.route) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+    }
+}
+
+data class FeatureItem(
+    val title: String,
+    val description: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color,
+    val route: String
+)
+
+@Composable
+fun FeatureCardCompact(
+    feature: FeatureItem,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(y = 12.dp)
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(
+                                feature.color,
+                                feature.color.copy(alpha = 0.7f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = feature.icon,
+                    contentDescription = feature.title,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            // Content
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = feature.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = feature.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    maxLines = 1
+                )
+            }
+            
+            // Arrow
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = "Navigate",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
             )
         }
     }

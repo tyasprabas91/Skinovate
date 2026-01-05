@@ -62,6 +62,7 @@
   - Routine creation flow
 - [x] **Manual Testing Checklist**:
   - [x] Created comprehensive MANUAL_TESTING_CHECKLIST.md
+  - [x] Created practical PRACTICAL_TESTING_CHECKLIST.md (focused on critical paths)
   - [ ] Execute manual testing
   - [ ] Test semua screens
   - [ ] Test navigation
@@ -71,7 +72,7 @@
 
 **Estimasi:** 2-3 hari  
 **Impact:** Critical untuk production quality  
-**Status:** ⚠️ In Progress - Basic unit tests & checklist created, integration tests pending
+**Status:** ⚠️ In Progress - Testing documentation & basic unit tests completed, manual testing pending
 
 #### 1.2 Bug Fixes & Edge Cases
 - [ ] Test dan fix potential crashes
@@ -160,7 +161,7 @@
 | Data Persistence | ✅ Done | 100% |
 | Notifications | ✅ Done | 100% |
 | UI/UX Polish | ✅ Done | 95% |
-| Testing | ❌ Not Started | 0% |
+| Testing | ⚠️ In Progress | 40% |
 | Bug Fixes | ⚠️ In Progress | 50% |
 | Production Config | ✅ Done | 100% |
 

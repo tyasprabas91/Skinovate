@@ -11,7 +11,9 @@ import com.example.skinovate.data.Routine
 @Entity(tableName = "routines")
 data class RoutineEntity(
     @PrimaryKey
+    val compositeId: String, // Format: "userId_routineId" e.g., "user123_morning"
     val id: String, // "morning" or "evening"
+    val userId: String, // User ID for data isolation
     val title: String,
     val time: String
 )

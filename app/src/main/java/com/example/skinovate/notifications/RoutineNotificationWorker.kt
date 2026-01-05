@@ -1,5 +1,6 @@
 package com.example.skinovate.notifications
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -28,6 +29,7 @@ class RoutineNotificationWorker(
             val notificationManager = NotificationManagerCompat.from(applicationContext)
             val notificationId = inputData.getInt(KEY_NOTIFICATION_ID, System.currentTimeMillis().toInt())
 
+            @SuppressLint("MissingPermission")
             notificationManager.notify(notificationId, notification)
 
             // Schedule next notification for tomorrow (24 hours from now)

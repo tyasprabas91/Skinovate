@@ -1,6 +1,7 @@
 package com.example.skinovate.data
 
 import android.content.Context
+import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.data.database.DatabaseModule
 import com.example.skinovate.data.database.ScanHistoryEntity
 import kotlinx.coroutines.CoroutineScope
@@ -9,6 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // 1. Data model tetap sama
@@ -49,18 +51,29 @@ object UserRepository {
         val database = DatabaseModule.getDatabase(context)
         databaseInitialized = true
         
-        // Load latest scan from database
+        // Load latest scan from database for current user
         repositoryScope.launch {
             try {
-                val latestScanEntity = database.scanHistoryDao().getLatestScan()
+                val userId = AuthRepository.currentUser.value?.id ?: return@launch
+                val latestScanEntity = database.scanHistoryDao().getLatestScan(userId)
                 if (latestScanEntity != null) {
                     _lastScan.value = latestScanEntity.toScanResult()
+                } else {
+                    _lastScan.value = null
                 }
             } catch (e: Exception) {
                 // Database belum ready atau error, ignore
                 e.printStackTrace()
+                _lastScan.value = null
             }
         }
+    }
+    
+    /**
+     * Clear user data (called on logout)
+     */
+    fun clearUserData() {
+        _lastScan.value = null
     }
     
     /**
@@ -73,8 +86,9 @@ object UserRepository {
         
         repositoryScope.launch {
             try {
+                val userId = AuthRepository.currentUser.value?.id ?: return@launch
                 val database = DatabaseModule.getDatabase(context)
-                val entity = ScanHistoryEntity.fromScanResult(scanResult)
+                val entity = ScanHistoryEntity.fromScanResult(scanResult, userId)
                 database.scanHistoryDao().insertScan(entity)
                 
                 // Update lastScan
@@ -86,7 +100,11 @@ object UserRepository {
     }
     
     /**
-     * Get all scan history
+     * Get all scan history for current user
      */
-    fun getAllScans(context: Context) = DatabaseModule.getDatabase(context).scanHistoryDao().getAllScans()
+    fun getAllScans(context: Context): kotlinx.coroutines.flow.Flow<List<ScanHistoryEntity>> {
+        val userId = AuthRepository.currentUser.value?.id ?: return kotlinx.coroutines.flow.flowOf(emptyList())
+        val database = DatabaseModule.getDatabase(context)
+        return database.scanHistoryDao().getAllScans(userId)
+    }
 }

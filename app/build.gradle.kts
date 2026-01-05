@@ -150,4 +150,11 @@ dependencies {
     
     // Gson for JSON serialization (data export)
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Ktor for HTTP client (Groq API)
+    val ktor_version = "2.3.5"
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-android:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-gson:$ktor_version")
 }

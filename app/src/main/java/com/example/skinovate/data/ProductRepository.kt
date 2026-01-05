@@ -55,6 +55,12 @@ object ProductRepository {
      * Seed data dan load products dari database
      */
     fun init(context: Context) {
+        // Immediately set seed data as initial value so UI doesn't show empty
+        if (_allProductsFlow.value.isEmpty()) {
+            _cachedProducts = ProductSeedData.defaultProducts
+            _allProductsFlow.value = ProductSeedData.defaultProducts
+        }
+        
         if (databaseInitialized) return
         
         val database = DatabaseModule.getDatabase(context)
@@ -98,8 +104,14 @@ object ProductRepository {
         try {
             val productsFlow = database.productDao().getAllProducts()
             val products = productsFlow.first().map { it.toProduct() }
-            _cachedProducts = products
-            _allProductsFlow.value = products
+            if (products.isEmpty()) {
+                // If database is empty, use seed data
+                _cachedProducts = ProductSeedData.defaultProducts
+                _allProductsFlow.value = ProductSeedData.defaultProducts
+            } else {
+                _cachedProducts = products
+                _allProductsFlow.value = products
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             // Fallback to seed data

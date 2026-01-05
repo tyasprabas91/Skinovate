@@ -1,0 +1,5 @@
+image_path,skin_type,acne_type,acne_scars,acne_scar_severity,dark_spots,dark_spots_severity,wrinkles,wrinkle_severity,pores,pore_size,texture,texture_score,hydration,hydration_score,redness,redness_level,uneven_tone,tone_score,sun_damage,overall_score,notes
+example_001.jpg,oily,blackheads,1,1,0,0,0,0,1,2,rough,65,2,70,0,0,3,75,0,82,Clear acne-prone areas
+example_002.jpg,dry,none,0,0,1,2,1,1,0,1,smooth,85,3,90,1,1,4,85,0,88,Good hydration level
+example_003.jpg,combination,cystic,1,2,1,1,0,0,1,2,bumpy,60,2,75,1,1,3,70,1,72,Some hyperpigmentation
+

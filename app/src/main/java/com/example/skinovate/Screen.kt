@@ -14,11 +14,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 // 3. Define your routes safely
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Default.Home)
-    object Features : Screen("features", "Features", Icons.Default.Face)
+    object HistoryAnalysis : Screen("history_analysis", "Analisis", Icons.Default.Face)
+    object Learning : Screen("learning", "Edukasi", Icons.Default.Info)
     object Products : Screen("products", "Products", Icons.Default.ShoppingCart)
     object Profile : Screen("profile", "Profil", Icons.Default.Person)
+    object RoutineRecommendation : Screen("routine_recommendation", "Rekomendasi", Icons.Default.List)
     object RoutineMaker : Screen("routine_maker", "Routine", Icons.Default.List)
-    object FaceAnalysis : Screen("face_analysis", "Face Scan", Icons.Default.Face)
+    object SkinQuestionnaire : Screen("skin_questionnaire", "Analisis Kulit", Icons.Default.Face)
     
     // Profile Sub-screens
     object PersonalInformation : Screen("personal_information", "Informasi Pribadi", Icons.Default.Person)

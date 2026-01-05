@@ -10,16 +10,22 @@ import kotlinx.coroutines.flow.Flow
 interface RoutineStepDao {
     
     /**
-     * Get all steps for a routine
+     * Get all steps for a routine composite ID
      */
-    @Query("SELECT * FROM routine_steps WHERE routineId = :routineId ORDER BY time ASC")
-    fun getStepsByRoutineId(routineId: String): Flow<List<RoutineStepEntity>>
+    @Query("SELECT * FROM routine_steps WHERE routineCompositeId = :routineCompositeId")
+    fun getStepsByRoutineCompositeId(routineCompositeId: String): Flow<List<RoutineStepEntity>>
     
     /**
-     * Get step by ID
+     * Get all steps for a routine and user
      */
-    @Query("SELECT * FROM routine_steps WHERE id = :stepId")
-    suspend fun getStepById(stepId: String): RoutineStepEntity?
+    @Query("SELECT * FROM routine_steps WHERE routineId = :routineId AND userId = :userId")
+    fun getStepsByRoutineId(routineId: String, userId: String): Flow<List<RoutineStepEntity>>
+    
+    /**
+     * Get step by composite ID
+     */
+    @Query("SELECT * FROM routine_steps WHERE compositeId = :compositeId")
+    suspend fun getStepByCompositeId(compositeId: String): RoutineStepEntity?
     
     /**
      * Insert step
@@ -52,15 +58,21 @@ interface RoutineStepDao {
     suspend fun deleteStepById(stepId: String)
     
     /**
-     * Delete all steps for a routine
+     * Delete all steps for a routine composite ID
      */
-    @Query("DELETE FROM routine_steps WHERE routineId = :routineId")
-    suspend fun deleteStepsByRoutineId(routineId: String)
+    @Query("DELETE FROM routine_steps WHERE routineCompositeId = :routineCompositeId")
+    suspend fun deleteStepsByRoutineCompositeId(routineCompositeId: String)
     
     /**
-     * Delete all steps
+     * Delete all steps for a routine and user
      */
-    @Query("DELETE FROM routine_steps")
-    suspend fun deleteAllSteps()
+    @Query("DELETE FROM routine_steps WHERE routineId = :routineId AND userId = :userId")
+    suspend fun deleteStepsByRoutineId(routineId: String, userId: String)
+    
+    /**
+     * Delete all steps for a user
+     */
+    @Query("DELETE FROM routine_steps WHERE userId = :userId")
+    suspend fun deleteAllSteps(userId: String)
 }
 

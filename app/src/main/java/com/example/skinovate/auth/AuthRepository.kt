@@ -83,12 +83,16 @@ object AuthRepository {
         }
     }
 
-    fun logout() {
+    fun logout(context: Context) {
         _isLoggedIn.value = false
         _currentUser.value = null
 
         // Clear SharedPreferences
         prefs.edit().clear().apply()
+        
+        // Clear repository data
+        com.example.skinovate.data.UserRepository.clearUserData()
+        com.example.skinovate.data.RoutineRepository.clearUserData()
     }
     
     // Update user information

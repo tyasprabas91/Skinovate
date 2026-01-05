@@ -15,6 +15,7 @@ import java.util.Locale
 data class ScanHistoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val userId: String, // User ID for data isolation
     val score: Int,
     val skinType: String,
     val acnePercentage: Int,
@@ -66,8 +67,9 @@ data class ScanHistoryEntity(
         /**
          * Convert Domain Model to Entity
          */
-        fun fromScanResult(scanResult: ScanResult): ScanHistoryEntity {
+        fun fromScanResult(scanResult: ScanResult, userId: String): ScanHistoryEntity {
             return ScanHistoryEntity(
+                userId = userId,
                 score = scanResult.score,
                 skinType = scanResult.skinType,
                 acnePercentage = scanResult.acnePercentage,

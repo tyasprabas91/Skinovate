@@ -124,11 +124,11 @@ class AuthViewModel : ViewModel() {
     fun logout(context: Context) {
         viewModelScope.launch {
             googleSignInClient?.signOut()?.addOnCompleteListener {
-                AuthRepository.logout()
+                AuthRepository.logout(context)
                 _uiState.value = AuthUiState.Idle
             } ?: run {
                 // If client is null, just logout from repository
-                AuthRepository.logout()
+                AuthRepository.logout(context)
                 _uiState.value = AuthUiState.Idle
             }
         }

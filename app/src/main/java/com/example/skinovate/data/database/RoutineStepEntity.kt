@@ -15,19 +15,22 @@ import com.example.skinovate.data.SkincareStep
     foreignKeys = [
         ForeignKey(
             entity = RoutineEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["routineId"],
+            parentColumns = ["compositeId"],
+            childColumns = ["routineCompositeId"],
             onDelete = ForeignKey.CASCADE
         )
     ]
 )
 data class RoutineStepEntity(
     @PrimaryKey
+    val compositeId: String, // Format: "userId_stepId" e.g., "user123_step1"
     val id: String,
-    val routineId: String, // Foreign key to RoutineEntity
+    val userId: String, // User ID for data isolation
+    val routineId: String, // "morning" or "evening"
+    val routineCompositeId: String, // Foreign key to RoutineEntity.compositeId
     val stepType: String, // Stored as String, converted by TypeConverter
     val productName: String = "",
-    val time: String? = null
+    val duration: Int = 60 // Timer duration in seconds (default: 60 seconds = 1 minute)
 ) {
     /**
      * Convert Entity to Domain Model
@@ -37,7 +40,7 @@ data class RoutineStepEntity(
             id = id,
             type = ConversionHelpers.toSkincareStep(stepType),
             productName = productName,
-            time = time
+            duration = duration
         )
     }
     
@@ -45,13 +48,16 @@ data class RoutineStepEntity(
         /**
          * Convert Domain Model to Entity
          */
-        fun fromRoutineStep(routineStep: RoutineStep, routineId: String): RoutineStepEntity {
+        fun fromRoutineStep(routineStep: RoutineStep, routineId: String, userId: String, routineCompositeId: String): RoutineStepEntity {
             return RoutineStepEntity(
+                compositeId = "${userId}_${routineStep.id}",
                 id = routineStep.id,
+                userId = userId,
                 routineId = routineId,
+                routineCompositeId = routineCompositeId,
                 stepType = ConversionHelpers.fromSkincareStep(routineStep.type),
                 productName = routineStep.productName,
-                time = routineStep.time
+                duration = routineStep.duration
             )
         }
     }

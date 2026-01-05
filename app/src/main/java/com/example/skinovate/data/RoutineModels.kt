@@ -20,7 +20,7 @@ data class RoutineStep(
     val id: String = UUID.randomUUID().toString(), // Unique ID for deleting later
     val type: SkincareStep,      // The Category (Enum)
     val productName: String = "", // User's custom name (Optional)
-    val time: String? = null      // Specific time for this step (Optional)
+    val duration: Int = 60        // Timer duration in seconds (default: 60 seconds = 1 minute)
 )
 
 // UPDATE: Routine now uses RoutineStep

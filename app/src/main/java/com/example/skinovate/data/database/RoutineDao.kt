@@ -10,16 +10,22 @@ import kotlinx.coroutines.flow.Flow
 interface RoutineDao {
     
     /**
-     * Get routine by ID (morning or evening)
+     * Get routine by composite ID
      */
-    @Query("SELECT * FROM routines WHERE id = :routineId")
-    suspend fun getRoutineById(routineId: String): RoutineEntity?
+    @Query("SELECT * FROM routines WHERE compositeId = :compositeId")
+    suspend fun getRoutineByCompositeId(compositeId: String): RoutineEntity?
     
     /**
-     * Get all routines
+     * Get routine by ID (morning or evening) for a user
      */
-    @Query("SELECT * FROM routines ORDER BY id ASC")
-    fun getAllRoutines(): Flow<List<RoutineEntity>>
+    @Query("SELECT * FROM routines WHERE id = :routineId AND userId = :userId")
+    suspend fun getRoutineById(routineId: String, userId: String): RoutineEntity?
+    
+    /**
+     * Get all routines for a user
+     */
+    @Query("SELECT * FROM routines WHERE userId = :userId ORDER BY id ASC")
+    fun getAllRoutines(userId: String): Flow<List<RoutineEntity>>
     
     /**
      * Insert or update routine
@@ -38,5 +44,11 @@ interface RoutineDao {
      */
     @Delete
     suspend fun deleteRoutine(routine: RoutineEntity)
+    
+    /**
+     * Delete all routines for a user
+     */
+    @Query("DELETE FROM routines WHERE userId = :userId")
+    suspend fun deleteAllRoutines(userId: String)
 }
 

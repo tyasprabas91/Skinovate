@@ -7,7 +7,8 @@ import androidx.room.TypeConverters
 /**
  * Room Database untuk aplikasi Skinovate
  * 
- * Version 1: Initial database schema
+ * Version 3: Added userId to all user-specific entities for data isolation
+ * Version 4: Changed RoutineStepEntity.time to duration (Int, in minutes)
  */
 @Database(
     entities = [
@@ -16,7 +17,7 @@ import androidx.room.TypeConverters
         RoutineStepEntity::class,
         ScanHistoryEntity::class
     ],
-    version = 1,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

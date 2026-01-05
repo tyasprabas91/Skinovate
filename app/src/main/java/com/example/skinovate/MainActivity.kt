@@ -14,8 +14,6 @@ import com.example.skinovate.data.ProductRepository
 import com.example.skinovate.data.RoutineRepository
 import com.example.skinovate.data.UserRepository
 import com.example.skinovate.data.database.DatabaseModule
-import com.example.skinovate.notifications.NotificationHelper
-import com.example.skinovate.notifications.NotificationSettingsRepository
 import com.example.skinovate.screen.AuthScreen
 import com.example.skinovate.ui.theme.SkinovateTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -27,26 +25,46 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize AuthRepository
-        AuthRepository.init(this)
-        
-        // Initialize Database (singleton pattern - will be created on first access)
-        DatabaseModule.getDatabase(this)
-        
-        // Initialize Repositories
-        UserRepository.init(this)
-        RoutineRepository.init(this)
-        ProductRepository.init(this)
-        
-        // Setup Notification Channels
-        NotificationHelper.createNotificationChannels(this)
-        
-        // Initialize Notification Settings
-        NotificationSettingsRepository.init(this)
-        
-        // Schedule notifications if enabled
-        if (NotificationSettingsRepository.routineRemindersEnabled.value) {
-            com.example.skinovate.notifications.RoutineNotificationManager.scheduleRoutineNotifications(this)
+        try {
+            // Initialize AuthRepository
+            AuthRepository.init(this)
+            
+            // Initialize Database (singleton pattern - will be created on first access)
+            // This is non-blocking as Room uses background thread internally
+            DatabaseModule.getDatabase(this)
+            
+            // Initialize Repositories (all use coroutines, non-blocking)
+            UserRepository.init(this)
+            RoutineRepository.init(this)
+            ProductRepository.init(this)
+            
+            // Setup Notification Channels (with error handling)
+            try {
+                com.example.skinovate.notifications.NotificationHelper.createNotificationChannels(this)
+                com.example.skinovate.utils.RoutineTimerHelper.createTimerChannel(this)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            // Initialize Notification Settings (with error handling) - MUST be called before accessing StateFlow
+            try {
+                com.example.skinovate.notifications.NotificationSettingsRepository.init(this)
+                
+                // Schedule notifications if enabled (only after init)
+                try {
+                    if (com.example.skinovate.notifications.NotificationSettingsRepository.routineRemindersEnabled.value) {
+                        com.example.skinovate.notifications.RoutineNotificationManager.scheduleRoutineNotifications(this)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Continue even if notification setup fails
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Log error but continue - app should still launch
         }
 
         setContent {

@@ -3,6 +3,7 @@ package com.example.skinovate.utils
 import android.content.Context
 import android.os.Environment
 import androidx.core.content.ContextCompat
+import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.data.database.DatabaseModule
 import com.example.skinovate.data.ScanResult
 import com.google.gson.Gson
@@ -30,19 +31,20 @@ object DataExportHelper {
      */
     suspend fun exportUserData(context: Context): Result<File> = withContext(Dispatchers.IO) {
         try {
+            val userId = AuthRepository.currentUser.value?.id ?: return@withContext Result.failure(Exception("User not logged in"))
             val database = DatabaseModule.getDatabase(context)
             
             // Collect all user data
-            val scanHistory = database.scanHistoryDao().getAllScans().first()
-            val morningRoutine = database.routineDao().getRoutineById("morning")
-            val eveningRoutine = database.routineDao().getRoutineById("evening")
+            val scanHistory = database.scanHistoryDao().getAllScans(userId).first()
+            val morningRoutine = database.routineDao().getRoutineById("morning", userId)
+            val eveningRoutine = database.routineDao().getRoutineById("evening", userId)
             
             val morningSteps = morningRoutine?.let {
-                database.routineStepDao().getStepsByRoutineId("morning").first()
+                database.routineStepDao().getStepsByRoutineId("morning", userId).first()
             } ?: emptyList()
             
             val eveningSteps = eveningRoutine?.let {
-                database.routineStepDao().getStepsByRoutineId("evening").first()
+                database.routineStepDao().getStepsByRoutineId("evening", userId).first()
             } ?: emptyList()
             
             // Create data structure
@@ -94,17 +96,15 @@ object DataExportHelper {
      */
     suspend fun deleteAllUserData(context: Context): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            val userId = AuthRepository.currentUser.value?.id ?: return@withContext Result.failure(Exception("User not logged in"))
             val database = DatabaseModule.getDatabase(context)
             
             // Delete all user data from database
-            database.scanHistoryDao().deleteAllScans()
-            database.routineStepDao().deleteAllSteps()
+            database.scanHistoryDao().deleteAllScans(userId)
+            database.routineStepDao().deleteAllSteps(userId)
             
-            val morningRoutine = database.routineDao().getRoutineById("morning")
-            val eveningRoutine = database.routineDao().getRoutineById("evening")
-            
-            morningRoutine?.let { database.routineDao().deleteRoutine(it) }
-            eveningRoutine?.let { database.routineDao().deleteRoutine(it) }
+            // Delete routines (steps will be cascade deleted)
+            database.routineDao().deleteAllRoutines(userId)
             
             // Clear SharedPreferences (except notification settings - user might want to keep those)
             // We'll clear auth and product seeding flag

@@ -1,6 +1,7 @@
 package com.example.skinovate.data
 
 import android.content.Context
+import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.data.database.DatabaseModule
 import com.example.skinovate.data.database.RoutineEntity
 import com.example.skinovate.data.database.RoutineStepEntity
@@ -19,38 +20,33 @@ object RoutineRepository {
     private var databaseInitialized = false
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
-    // Helper to make quick steps
-    private fun createStep(type: SkincareStep, time: String? = null) =
-        RoutineStep(type = type, time = time)
-
-    // --- 1. Default Data ---
-    private val defaultMorning = Routine(
+    // --- 1. Empty Default Data ---
+    private val emptyMorning = Routine(
         title = "Morning Routine",
         time = "08:00 AM",
-        steps = listOf(
-            createStep(SkincareStep.CLEANSER, "08:00 AM"),
-            createStep(SkincareStep.TONER, "08:05 AM"),
-            createStep(SkincareStep.MOISTURIZER, "08:10 AM"),
-            createStep(SkincareStep.SUNSCREEN, "08:15 AM")
-        )
+        steps = emptyList()
     )
 
-    private val defaultEvening = Routine(
+    private val emptyEvening = Routine(
         title = "Evening Routine",
-        time = "09:30 PM",
-        steps = listOf(
-            createStep(SkincareStep.CLEANSER, "09:30 PM"),
-            createStep(SkincareStep.RETINOL, "09:35 PM"),
-            createStep(SkincareStep.MOISTURIZER, "09:40 PM")
-        )
+        time = "09:00 PM",
+        steps = emptyList()
     )
 
     // --- 2. Live Data Streams ---
-    private val _morningRoutine = MutableStateFlow(defaultMorning)
+    private val _morningRoutine = MutableStateFlow(emptyMorning)
     val morningRoutine: StateFlow<Routine> = _morningRoutine.asStateFlow()
 
-    private val _eveningRoutine = MutableStateFlow(defaultEvening)
+    private val _eveningRoutine = MutableStateFlow(emptyEvening)
     val eveningRoutine: StateFlow<Routine> = _eveningRoutine.asStateFlow()
+    
+    /**
+     * Clear user data (called on logout)
+     */
+    fun clearUserData() {
+        _morningRoutine.value = emptyMorning
+        _eveningRoutine.value = emptyEvening
+    }
 
     /**
      * Initialize repository dengan context
@@ -65,11 +61,13 @@ object RoutineRepository {
         // Load routines from database
         repositoryScope.launch {
             try {
+                val userId = AuthRepository.currentUser.value?.id ?: return@launch
+                
                 // Load morning routine
-                val morningEntity = database.routineDao().getRoutineById("morning")
+                val morningEntity = database.routineDao().getRoutineById("morning", userId)
                 if (morningEntity != null) {
                     // Get steps using first() from Flow
-                    val stepEntities = database.routineStepDao().getStepsByRoutineId("morning")
+                    val stepEntities = database.routineStepDao().getStepsByRoutineId("morning", userId)
                     val stepList = stepEntities.first()
                     
                     val routineSteps = stepList.map { it.toRoutineStep() }
@@ -79,14 +77,14 @@ object RoutineRepository {
                         steps = routineSteps
                     )
                 } else {
-                    // Initialize with default data
-                    saveRoutineToDatabase(defaultMorning, "morning", context)
+                    // Keep empty - don't create default data
+                    _morningRoutine.value = emptyMorning
                 }
                 
                 // Load evening routine  
-                val eveningEntity = database.routineDao().getRoutineById("evening")
+                val eveningEntity = database.routineDao().getRoutineById("evening", userId)
                 if (eveningEntity != null) {
-                    val stepEntities = database.routineStepDao().getStepsByRoutineId("evening")
+                    val stepEntities = database.routineStepDao().getStepsByRoutineId("evening", userId)
                     val stepList = stepEntities.first()
                     
                     val routineSteps = stepList.map { it.toRoutineStep() }
@@ -96,14 +94,14 @@ object RoutineRepository {
                         steps = routineSteps
                     )
                 } else {
-                    // Initialize with default data
-                    saveRoutineToDatabase(defaultEvening, "evening", context)
+                    // Keep empty - don't create default data
+                    _eveningRoutine.value = emptyEvening
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // On error, use defaults
-                _morningRoutine.value = defaultMorning
-                _eveningRoutine.value = defaultEvening
+                // On error, use empty routines
+                _morningRoutine.value = emptyMorning
+                _eveningRoutine.value = emptyEvening
             }
         }
     }
@@ -114,22 +112,27 @@ object RoutineRepository {
     private fun saveRoutineToDatabase(routine: Routine, routineId: String, context: Context) {
         repositoryScope.launch {
             try {
+                val userId = AuthRepository.currentUser.value?.id ?: return@launch
                 val database = DatabaseModule.getDatabase(context)
+                
+                val compositeId = "${userId}_${routineId}"
                 
                 // Save routine entity
                 val routineEntity = RoutineEntity(
+                    compositeId = compositeId,
                     id = routineId,
+                    userId = userId,
                     title = routine.title,
                     time = routine.time
                 )
                 database.routineDao().insertOrUpdateRoutine(routineEntity)
                 
                 // Delete old steps
-                database.routineStepDao().deleteStepsByRoutineId(routineId)
+                database.routineStepDao().deleteStepsByRoutineCompositeId(compositeId)
                 
                 // Save steps
                 val stepEntities = routine.steps.map { step ->
-                    RoutineStepEntity.fromRoutineStep(step, routineId)
+                    RoutineStepEntity.fromRoutineStep(step, routineId, userId, compositeId)
                 }
                 database.routineStepDao().insertSteps(stepEntities)
             } catch (e: Exception) {
@@ -175,6 +178,76 @@ object RoutineRepository {
         val updated = current.copy(steps = current.steps.filter { it.id != stepId })
         _eveningRoutine.value = updated
         updateRoutine(updated, "evening", context)
+    }
+    
+    fun updateStepInMorning(updatedStep: RoutineStep, context: Context) {
+        val current = _morningRoutine.value
+        val updated = current.copy(
+            steps = current.steps.map { if (it.id == updatedStep.id) updatedStep else it }
+        )
+        _morningRoutine.value = updated
+        updateRoutine(updated, "morning", context)
+    }
+    
+    fun updateStepInEvening(updatedStep: RoutineStep, context: Context) {
+        val current = _eveningRoutine.value
+        val updated = current.copy(
+            steps = current.steps.map { if (it.id == updatedStep.id) updatedStep else it }
+        )
+        _eveningRoutine.value = updated
+        updateRoutine(updated, "evening", context)
+    }
+    
+    /**
+     * Update routine time
+     */
+    fun updateMorningRoutineTime(newTime: String, context: Context) {
+        val current = _morningRoutine.value
+        val updated = current.copy(time = newTime)
+        _morningRoutine.value = updated
+        updateRoutine(updated, "morning", context)
+    }
+    
+    fun updateEveningRoutineTime(newTime: String, context: Context) {
+        val current = _eveningRoutine.value
+        val updated = current.copy(time = newTime)
+        _eveningRoutine.value = updated
+        updateRoutine(updated, "evening", context)
+    }
+    
+    /**
+     * Apply recommendation to routines
+     */
+    fun applyRecommendation(morningRoutine: Routine, eveningRoutine: Routine, context: Context) {
+        try {
+            // Update state first (synchronous) - this is safe
+            _morningRoutine.value = morningRoutine
+            _eveningRoutine.value = eveningRoutine
+            
+            // Save to database asynchronously
+            repositoryScope.launch {
+                try {
+                    // Ensure database is initialized
+                    val database = DatabaseModule.getDatabase(context)
+                    if (database != null) {
+                        saveRoutineToDatabase(morningRoutine, "morning", context)
+                        saveRoutineToDatabase(eveningRoutine, "evening", context)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // Even if database save fails, state is already updated
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // If state update fails, at least try to update state
+            try {
+                _morningRoutine.value = morningRoutine
+                _eveningRoutine.value = eveningRoutine
+            } catch (e2: Exception) {
+                e2.printStackTrace()
+            }
+        }
     }
     
     // Backward compatibility: functions without context (will use last context or skip DB)

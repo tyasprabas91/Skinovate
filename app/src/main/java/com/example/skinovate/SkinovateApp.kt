@@ -3,14 +3,16 @@ package com.example.skinovate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,12 +24,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.skinovate.navigation.Screen
 import com.example.skinovate.screen.ProductScreen
-import com.example.skinovate.screen.FaceAnalysisScreen
+import com.example.skinovate.screen.SkinQuestionnaireScreen
 import com.example.skinovate.screen.RoutineMakerScreen
 import com.example.skinovate.screen.SkinovateHomeScreen
 import com.example.skinovate.screen.ProfileScreen
 import com.example.skinovate.screen.PersonalInformationScreen
-import com.example.skinovate.screen.FeaturesScreen
+import com.example.skinovate.screen.HistoryAnalysisScreen
+import com.example.skinovate.screen.RoutineRecommendationScreen
+import com.example.skinovate.screen.LearningScreen
+import com.example.skinovate.screen.ProblemDetailScreen
+import com.example.skinovate.screen.components.ChatBotDialog
 import com.example.skinovate.screen.NotificationSettingsScreen
 import com.example.skinovate.screen.PrivacySettingsScreen
 import com.example.skinovate.screen.AboutScreen
@@ -44,13 +50,28 @@ fun SkinovateApp(
 ) {
     val navController = rememberNavController()
 
-    // List of screens for the bottom bar (excluding FaceAnalysis which is in the center)
-    val items = listOf(Screen.Home, Screen.Features, Screen.Products, Screen.Profile)
+    // List of screens for the bottom bar
+    val items = listOf(Screen.Home, Screen.HistoryAnalysis, Screen.Learning, Screen.Products, Screen.Profile)
 
+    var showChatBot by remember { mutableStateOf(false) }
+    
     Scaffold(
         bottomBar = {
             SkinovateBottomBar(navController = navController, items = items)
-        }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showChatBot = true },
+                modifier = Modifier.padding(bottom = 80.dp), // Above bottom bar
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Text(
+                    text = "💬",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
         // The NavHost swaps the screens
         NavHost(
@@ -63,12 +84,17 @@ fun SkinovateApp(
                 SkinovateHomeScreen(navController = navController)
             }
 
-            // Screen 2: Features
-            composable(Screen.Features.route) {
-                FeaturesScreen(navController = navController)
+            // Screen 2: History Analysis
+            composable(Screen.HistoryAnalysis.route) {
+                HistoryAnalysisScreen(navController = navController)
             }
 
-            // Screen 3: Products (Placeholder)
+            // Screen 3: Learning/Edukasi
+            composable(Screen.Learning.route) {
+                LearningScreen(navController = navController)
+            }
+
+            // Screen 4: Products
             composable(Screen.Products.route) {
                 ProductScreen(navController)
             }
@@ -87,14 +113,19 @@ fun SkinovateApp(
                 }
             }
 
-            // Screen 5: Routine Maker (Placeholder)
+            // Screen 5: Routine Maker
             composable(Screen.RoutineMaker.route) {
                 RoutineMakerScreen(navController)
             }
 
-            // Screen 6: Face Analysis
-            composable(Screen.FaceAnalysis.route) {
-                FaceAnalysisScreen(navController)
+            // Screen 6: Routine Recommendation
+            composable(Screen.RoutineRecommendation.route) {
+                RoutineRecommendationScreen(navController = navController)
+            }
+
+            // Screen 7: Skin Questionnaire
+            composable(Screen.SkinQuestionnaire.route) {
+                SkinQuestionnaireScreen(navController)
             }
 
             // Profile Sub-screens
@@ -121,7 +152,23 @@ fun SkinovateApp(
             composable(Screen.FAQ.route) {
                 FAQScreen(navController = navController)
             }
+            
+            // Learning/Problem Detail
+            composable("problem_detail/{problemId}") { backStackEntry ->
+                val problemId = backStackEntry.arguments?.getString("problemId") ?: ""
+                ProblemDetailScreen(
+                    navController = navController,
+                    problemId = problemId
+                )
+            }
         }
+    }
+    
+    // ChatBot Dialog
+    if (showChatBot) {
+        ChatBotDialog(
+            onDismiss = { showChatBot = false }
+        )
     }
 }
 
@@ -130,89 +177,27 @@ fun SkinovateBottomBar(navController: NavController, items: List<Screen>) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Split items into left and right for the center button
-    val leftItems = items.take(2) // Home, Features
-    val rightItems = items.drop(2) // Products, Profile
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.primary,
         shadowElevation = 8.dp
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Left items
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    leftItems.forEach { screen ->
-                        BottomNavItem(
-                            screen = screen,
-                            isSelected = currentRoute == screen.route,
-                            onClick = {
-                                handleNavigation(navController, screen)
-                            }
-                        )
+            items.forEach { screen ->
+                BottomNavItem(
+                    screen = screen,
+                    isSelected = currentRoute == screen.route,
+                    onClick = {
+                        handleNavigation(navController, screen)
                     }
-                }
-
-                // Center button - Face Analysis (larger and elevated like QRIS button)
-                val isFaceAnalysisSelected = currentRoute == Screen.FaceAnalysis.route
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .offset(y = (-12).dp)
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = CircleShape,
-                            spotColor = Color.Black.copy(alpha = 0.3f)
-                        )
-                        .clip(CircleShape)
-                        .background(Color(0xFFFFC107)) // Yellow/Amber color
-                        .clickable {
-                            navController.navigate(Screen.FaceAnalysis.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Screen.FaceAnalysis.icon,
-                        contentDescription = Screen.FaceAnalysis.title,
-                        modifier = Modifier.size(28.dp),
-                        tint = Color.White
-                    )
-                }
-
-                // Right items
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    rightItems.forEach { screen ->
-                        BottomNavItem(
-                            screen = screen,
-                            isSelected = currentRoute == screen.route,
-                            onClick = {
-                                handleNavigation(navController, screen)
-                            }
-                        )
-                    }
-                }
+                )
             }
         }
     }

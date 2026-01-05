@@ -10,22 +10,22 @@ import kotlinx.coroutines.flow.Flow
 interface ScanHistoryDao {
     
     /**
-     * Get all scan history, ordered by most recent first
+     * Get all scan history for a user, ordered by most recent first
      */
-    @Query("SELECT * FROM scan_history ORDER BY dateTimestamp DESC")
-    fun getAllScans(): Flow<List<ScanHistoryEntity>>
+    @Query("SELECT * FROM scan_history WHERE userId = :userId ORDER BY dateTimestamp DESC")
+    fun getAllScans(userId: String): Flow<List<ScanHistoryEntity>>
     
     /**
-     * Get latest scan
+     * Get latest scan for a user
      */
-    @Query("SELECT * FROM scan_history ORDER BY dateTimestamp DESC LIMIT 1")
-    suspend fun getLatestScan(): ScanHistoryEntity?
+    @Query("SELECT * FROM scan_history WHERE userId = :userId ORDER BY dateTimestamp DESC LIMIT 1")
+    suspend fun getLatestScan(userId: String): ScanHistoryEntity?
     
     /**
-     * Get scan by ID
+     * Get scan by ID and userId
      */
-    @Query("SELECT * FROM scan_history WHERE id = :scanId")
-    suspend fun getScanById(scanId: Long): ScanHistoryEntity?
+    @Query("SELECT * FROM scan_history WHERE id = :scanId AND userId = :userId")
+    suspend fun getScanById(scanId: Long, userId: String): ScanHistoryEntity?
     
     /**
      * Insert scan
@@ -52,9 +52,9 @@ interface ScanHistoryDao {
     suspend fun deleteScanById(scanId: Long)
     
     /**
-     * Delete all scans
+     * Delete all scans for a user
      */
-    @Query("DELETE FROM scan_history")
-    suspend fun deleteAllScans()
+    @Query("DELETE FROM scan_history WHERE userId = :userId")
+    suspend fun deleteAllScans(userId: String)
 }
 

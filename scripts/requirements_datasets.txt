@@ -1,0 +1,16 @@
+# Requirements for dataset download and organization scripts
+
+# Kaggle API
+kaggle>=1.5.16
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Image processing (optional, for augmentation)
+Pillow>=9.0.0
+opencv-python>=4.6.0
+
+# Progress bars
+tqdm>=4.64.0
+
