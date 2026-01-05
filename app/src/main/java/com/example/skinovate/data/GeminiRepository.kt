@@ -11,7 +11,7 @@ import java.io.File
 object GeminiRepository {
 
     // TODO: PASTE YOUR REAL API KEY HERE
-    private const val API_KEY = "AIzaSyCS488h6xEFCPEje6k4rqbvSvRMgG8IeTE"
+    private const val API_KEY = ""
 
     private val generativeModel = GenerativeModel(
         modelName = "gemini-2.5-flash",
