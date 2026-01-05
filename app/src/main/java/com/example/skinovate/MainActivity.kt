@@ -20,12 +20,22 @@ import com.example.skinovate.screen.AuthScreen
 import com.example.skinovate.ui.theme.SkinovateTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import com.example.skinovate.data.GeminiRepository
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ---------------------------------------------------------
+        lifecycleScope.launch {
+            println("GEMINI_DEBUG: Starting check...")
+            GeminiRepository.debugAvailableModels()
+        }
+        // ---------------------------------------------------------
 
         // Initialize AuthRepository
         AuthRepository.init(this)

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8043d5c73760fec3f0b5925d672aacb7",
+    "identityHash": "55104f3922fb95de31b804eecbb08c5a",
     "entities": [
       {
         "tableName": "products",
@@ -156,7 +156,7 @@
       },
       {
         "tableName": "scan_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `score` INTEGER NOT NULL, `skinType` TEXT NOT NULL, `acnePercentage` INTEGER NOT NULL, `dryPercentage` INTEGER NOT NULL, `recommendation` TEXT NOT NULL, `dateTimestamp` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `score` INTEGER NOT NULL, `skinType` TEXT NOT NULL, `acnePercentage` INTEGER NOT NULL, `dryPercentage` INTEGER NOT NULL, `recommendation` TEXT NOT NULL, `tipsString` TEXT NOT NULL, `dateTimestamp` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -195,6 +195,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "tipsString",
+            "columnName": "tipsString",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "dateTimestamp",
             "columnName": "dateTimestamp",
             "affinity": "INTEGER",
@@ -214,7 +220,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8043d5c73760fec3f0b5925d672aacb7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '55104f3922fb95de31b804eecbb08c5a')"
     ]
   }
 }
