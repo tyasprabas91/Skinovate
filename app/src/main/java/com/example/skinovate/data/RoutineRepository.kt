@@ -46,6 +46,7 @@ object RoutineRepository {
     fun clearUserData() {
         _morningRoutine.value = emptyMorning
         _eveningRoutine.value = emptyEvening
+        databaseInitialized = false // Reset flag so init() can be called again after login
     }
 
     /**

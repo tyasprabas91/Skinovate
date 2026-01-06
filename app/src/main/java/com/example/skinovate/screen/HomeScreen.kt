@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,6 +42,8 @@ import com.example.skinovate.data.RoutineRepository
 import com.example.skinovate.data.Routine
 import com.example.skinovate.navigation.Screen
 import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,17 +133,45 @@ fun SkinovateHomeScreen(navController: NavController) {
 
 @Composable
 fun HeaderSection(username: String) {
-    Column {
+    // Get dynamic greeting based on time
+    val greeting = remember {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        when {
+            hour < 12 -> "Good Morning"
+            hour < 17 -> "Good Afternoon"
+            hour < 21 -> "Good Evening"
+            else -> "Good Night"
+        }
+    }
+    
+    // Get current date
+    val currentDate = remember {
+        try {
+            val sdf = SimpleDateFormat("EEEE, d MMMM yyyy", java.util.Locale("id", "ID"))
+            sdf.format(Calendar.getInstance().time)
+        } catch (e: Exception) {
+            // Fallback to default locale if Indonesian locale not available
+            val sdf = SimpleDateFormat("EEEE, d MMMM yyyy", java.util.Locale.getDefault())
+            sdf.format(Calendar.getInstance().time)
+        }
+    }
+    
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "Good Morning,",
+            text = "$greeting,",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
         Text(
             text = username,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = currentDate,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
     }
 }
@@ -229,7 +261,7 @@ fun RoutineSection(
         getNextRoutine(morningRoutine, eveningRoutine)
     }
     
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Routine",
             style = MaterialTheme.typography.titleLarge,
@@ -239,32 +271,104 @@ fun RoutineSection(
 
         // Only show card if there's a next routine
         if (nextRoutine != null) {
+            val isMorning = nextRoutine.title.contains("Morning", ignoreCase = true)
+            val totalSteps = nextRoutine.steps.size
+            
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                    Column {
-                        Text(
-                            text = "Next Routine",
-                            color = Color.White.copy(alpha = 0.8f),
-                            style = MaterialTheme.typography.labelMedium
+                Box(modifier = Modifier.padding(20.dp).fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.List,
+                                    contentDescription = "Time",
+                                    tint = Color.White.copy(alpha = 0.9f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "Next Routine",
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = nextRoutine.time,
+                                color = Color.White,
+                                fontSize = 36.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = nextRoutine.title,
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.List,
+                                    contentDescription = "Steps",
+                                    tint = Color.White.copy(alpha = 0.8f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "$totalSteps ${if (totalSteps == 1) "step" else "steps"}",
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Empty state
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.List,
+                            contentDescription = "No Routine",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(32.dp)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = nextRoutine.time,
-                            color = Color.White,
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = nextRoutine.title,
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge
+                            text = "No Routine Yet",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -276,55 +380,110 @@ fun RoutineSection(
 @Composable
 fun SkinQuestionnaireSection(navController: NavController, scanResult: ScanResult?) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiary),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Box(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+        Box(modifier = Modifier.padding(20.dp).fillMaxWidth()) {
             if (scanResult == null) {
                 // STATE A: No Scan Yet
                 Column {
-                    Text(
-                        text = "No Analysis Yet",
-                        color = Color.White.copy(alpha = 0.8f),
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Face,
+                            contentDescription = "Analysis",
+                            tint = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Skin Analysis",
+                            color = Color.White.copy(alpha = 0.9f),
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Start Analysis",
                         color = Color.White,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Jawab pertanyaan untuk mengetahui tipe kulit Anda",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
+                        color = Color.White.copy(alpha = 0.9f),
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             } else {
-                // STATE B: Result Exists - Only show last scan, score, and skin type
-                Column {
-                    Text(
-                        text = "Last Scan: ${scanResult.date}",
-                        color = Color.White.copy(alpha = 0.8f),
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${scanResult.score}% Score",
-                        color = Color.White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Type: ${scanResult.skinType}",
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp
-                    )
+                // STATE B: Result Exists - Enhanced with circular progress
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Face,
+                                contentDescription = "Analysis",
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "Last Scan: ${scanResult.date}",
+                                color = Color.White.copy(alpha = 0.9f),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "${scanResult.score}%",
+                            color = Color.White,
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            color = Color.White.copy(alpha = 0.25f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = scanResult.skinType,
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                    
+                    // Circular Progress Indicator
+                    Box(
+                        modifier = Modifier.size(80.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            progress = { scanResult.score / 100f },
+                            modifier = Modifier.size(80.dp),
+                            color = Color.White,
+                            strokeWidth = 6.dp,
+                            trackColor = Color.White.copy(alpha = 0.3f)
+                        )
+                        Text(
+                            text = "${scanResult.score}%",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -339,7 +498,7 @@ fun FeaturesSection(navController: NavController) {
             description = "Jawab pertanyaan untuk mengetahui tipe kulitmu",
             icon = Icons.Default.Face,
             color = Color(0xFF264653),
-            route = Screen.SkinQuestionnaire.route
+            route = Screen.HistoryAnalysis.route
         ),
         FeatureItem(
             title = "Routine Maker",
@@ -349,11 +508,18 @@ fun FeaturesSection(navController: NavController) {
             route = Screen.RoutineMaker.route
         ),
         FeatureItem(
-            title = "Product Recommendations",
+            title = "Products",
             description = "Dapatkan rekomendasi produk skincare",
             icon = Icons.Default.ShoppingCart,
             color = Color(0xFFE9C46A),
             route = Screen.Products.route
+        ),
+        FeatureItem(
+            title = "Edukasi",
+            description = "Pelajari tentang masalah kulit dan perawatan",
+            icon = Icons.Default.Info,
+            color = Color(0xFFF4A261),
+            route = Screen.Learning.route
         )
     )
     
@@ -365,19 +531,34 @@ fun FeaturesSection(navController: NavController) {
             fontWeight = FontWeight.Bold
         )
         
-        features.forEach { feature ->
-            FeatureCardCompact(
-                feature = feature,
-                onClick = {
-                    navController.navigate(feature.route) {
-                        popUpTo(Screen.Home.route) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
+        // 2x2 Grid Layout (using Row and Column instead of LazyVerticalGrid to avoid nesting scroll)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            features.chunked(2).forEach { rowItems ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    rowItems.forEach { feature ->
+                        FeatureCardGrid(
+                            feature = feature,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                navController.navigate(feature.route) {
+                                    popUpTo(Screen.Home.route) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
+                    // Add spacer if odd number of items
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
-            )
+            }
         }
     }
 }
@@ -459,6 +640,72 @@ fun FeatureCardCompact(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun FeatureCardGrid(
+    feature: FeatureItem,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(140.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(
+                                feature.color,
+                                feature.color.copy(alpha = 0.8f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = feature.icon,
+                    contentDescription = feature.title,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            // Content
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = feature.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = feature.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
+                )
+            }
         }
     }
 }

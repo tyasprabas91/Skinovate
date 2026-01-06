@@ -75,6 +75,7 @@ object UserRepository {
      */
     fun clearUserData() {
         _lastScan.value = null
+        databaseInitialized = false // Reset flag so init() can be called again after login
     }
     
     /**
@@ -107,5 +108,14 @@ object UserRepository {
         val userId = AuthRepository.currentUser.value?.id ?: return kotlinx.coroutines.flow.flowOf(emptyList())
         val database = DatabaseModule.getDatabase(context)
         return database.scanHistoryDao().getAllScans(userId)
+    }
+    
+    /**
+     * Get scan count for current user
+     */
+    suspend fun getScanCount(context: Context): Int {
+        val userId = AuthRepository.currentUser.value?.id ?: return 0
+        val database = DatabaseModule.getDatabase(context)
+        return database.scanHistoryDao().getScanCount(userId)
     }
 }

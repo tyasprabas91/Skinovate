@@ -9,13 +9,14 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.ui.graphics.vector.ImageVector
 
 // 3. Define your routes safely
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "Home", Icons.Default.Home)
     object HistoryAnalysis : Screen("history_analysis", "Analisis", Icons.Default.Face)
-    object Learning : Screen("learning", "Edukasi", Icons.Default.Info)
+    object Learning : Screen("learning", "Edukasi", Icons.Default.MenuBook)
     object Products : Screen("products", "Products", Icons.Default.ShoppingCart)
     object Profile : Screen("profile", "Profil", Icons.Default.Person)
     object RoutineRecommendation : Screen("routine_recommendation", "Rekomendasi", Icons.Default.List)

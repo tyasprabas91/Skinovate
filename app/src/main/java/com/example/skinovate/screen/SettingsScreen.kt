@@ -1,5 +1,6 @@
 package com.example.skinovate.screen
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,12 +14,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.skinovate.auth.AuthRepository
 import com.example.skinovate.auth.AuthViewModel
+import com.example.skinovate.data.RoutineRepository
+import com.example.skinovate.data.UserRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +35,19 @@ fun ProfileScreen(
     onLogout: () -> Unit
 ) {
     val currentUser by AuthRepository.currentUser.collectAsState()
+    
+    // Initialize repositories
+    LaunchedEffect(Unit) {
+        UserRepository.init(context)
+        RoutineRepository.init(context)
+    }
+    
+    // Get last scan
+    val lastScan by UserRepository.lastScan.collectAsState()
+    
+    // Get routines
+    val morningRoutine by RoutineRepository.morningRoutine.collectAsState()
+    val eveningRoutine by RoutineRepository.eveningRoutine.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -52,8 +71,23 @@ fun ProfileScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Compact Profile Header
+            CompactProfileHeader(
+                user = currentUser,
+                onClick = { navController.navigate(com.example.skinovate.navigation.Screen.PersonalInformation.route) }
+            )
+            
+            // Quick Stats Section
+            ProfileStatsSection(
+                lastScan = lastScan,
+                morningRoutine = morningRoutine,
+                eveningRoutine = eveningRoutine
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
             // Profile Options
             ProfileOptionSection(navController = navController)
 
@@ -65,6 +99,155 @@ fun ProfileScreen(
                     authViewModel.logout(context)
                     onLogout()
                 }
+            )
+        }
+    }
+}
+
+@Composable
+fun CompactProfileHeader(
+    user: com.example.skinovate.auth.User?,
+    onClick: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Profile Picture with AsyncImage
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                if (user?.photoUrl != null) {
+                    AsyncImage(
+                        model = user.photoUrl,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(android.R.drawable.sym_def_app_icon),
+                        error = painterResource(android.R.drawable.sym_def_app_icon)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user?.name ?: "User",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = user?.email ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+            
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ProfileStatsSection(
+    lastScan: com.example.skinovate.data.ScanResult?,
+    morningRoutine: com.example.skinovate.data.Routine,
+    eveningRoutine: com.example.skinovate.data.Routine
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Statistik",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        
+        // 3 items in a row
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            StatCard(
+                title = "Tipe Kulit",
+                value = lastScan?.skinType ?: "-",
+                icon = Icons.Default.Info,
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                title = "Rutinitas",
+                value = "${(morningRoutine.steps.size + eveningRoutine.steps.size)} steps",
+                icon = Icons.Default.List,
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                title = "Score Terakhir",
+                value = lastScan?.score?.let { "$it%" } ?: "-",
+                icon = Icons.Default.Star,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+fun StatCard(
+    title: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         }
     }
@@ -124,67 +307,7 @@ fun ProfileSection(user: com.example.skinovate.auth.User?) {
 
 @Composable
 fun ProfileOptionSection(navController: NavController) {
-    val currentUser by AuthRepository.currentUser.collectAsState()
-    
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Informasi Pribadi - styled like ProfileSection
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { navController.navigate(com.example.skinovate.navigation.Screen.PersonalInformation.route) }
-        ) {
-            Row(
-                modifier = Modifier.padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Profile Picture
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = currentUser?.name ?: "User",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = currentUser?.email ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
-                }
-                
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
         SettingsItem(
             icon = Icons.Default.Notifications,
             title = "Notifikasi",
@@ -197,12 +320,6 @@ fun ProfileOptionSection(navController: NavController) {
             subtitle = "Kelola data pribadi Anda",
             onClick = { navController.navigate(com.example.skinovate.navigation.Screen.PrivacySettings.route) }
         )
-//        SettingsItem(
-//            icon = Icons.Default.Info,
-//            title = "Tentang Aplikasi",
-//            subtitle = "Versi 1.0.0",
-//            onClick = { navController.navigate(com.example.skinovate.navigation.Screen.About.route) }
-//        )
         SettingsItem(
             icon = Icons.Default.Info,
             title = "Bantuan & Dukungan",
@@ -262,14 +379,19 @@ fun SettingsItem(
 
 @Composable
 fun LogoutButton(onClick: () -> Unit) {
-    Button(
+    FilledTonalButton(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.error
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = Color.White
+        ),
+        elevation = ButtonDefaults.filledTonalButtonElevation(
+            defaultElevation = 2.dp,
+            pressedElevation = 4.dp
         )
     ) {
         Text(
@@ -279,4 +401,3 @@ fun LogoutButton(onClick: () -> Unit) {
         )
     }
 }
-

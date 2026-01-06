@@ -1,5 +1,8 @@
 package com.example.skinovate.data
 
+import androidx.annotation.DrawableRes
+import com.example.skinovate.R
+
 /**
  * Data model untuk permasalahan kulit wajah
  */
@@ -7,7 +10,7 @@ data class SkinProblem(
     val id: String,
     val title: String,
     val description: String,
-    val icon: String, // Emoji atau icon identifier
+    @DrawableRes val imageResId: Int, // Drawable resource ID untuk gambar
     val causes: List<String>,
     val symptoms: List<String>,
     val prevention: List<String>,
@@ -26,7 +29,7 @@ object SkinProblemRepository {
             id = "inflamed_acne",
             title = "Jerawat Radang",
             description = "Jerawat radang adalah jerawat yang meradang, biasanya berwarna merah, bengkak, dan terasa sakit. Jenis jerawat ini terjadi ketika pori-pori tersumbat oleh minyak, sel kulit mati, dan bakteri.",
-            icon = "🔴",
+            imageResId = R.drawable.inflamed_acne,
             causes = listOf(
                 "Produksi minyak berlebih",
                 "Penumpukan sel kulit mati",
@@ -65,7 +68,7 @@ object SkinProblemRepository {
             id = "small_acne",
             title = "Jerawat Kecil",
             description = "Jerawat kecil (komedo dan whiteheads) adalah pori-pori yang tersumbat. Komedo hitam terjadi ketika pori terbuka dan teroksidasi, sedangkan whiteheads adalah pori tertutup.",
-            icon = "⚪",
+            imageResId = R.drawable.small_acne,
             causes = listOf(
                 "Pori-pori tersumbat oleh sebum",
                 "Penumpukan sel kulit mati",
@@ -101,7 +104,7 @@ object SkinProblemRepository {
             id = "acne_scars",
             title = "Bekas Jerawat",
             description = "Bekas jerawat adalah bekas luka yang tertinggal setelah jerawat sembuh. Ada berbagai jenis bekas jerawat seperti hiperpigmentasi (bekas hitam), atrophic scars (lekukan), dan hypertrophic scars (menonjol).",
-            icon = "🔵",
+            imageResId = R.drawable.acne_scars,
             causes = listOf(
                 "Memencet jerawat",
                 "Jerawat radang yang parah",
@@ -138,7 +141,7 @@ object SkinProblemRepository {
             id = "dark_spots",
             title = "Flek Hitam & Hiperpigmentasi",
             description = "Flek hitam atau hiperpigmentasi adalah kondisi dimana area kulit menjadi lebih gelap dari sekitarnya akibat produksi melanin berlebih. Bisa disebabkan oleh jerawat, paparan matahari, atau perubahan hormon.",
-            icon = "🌑",
+            imageResId = R.drawable.dark_spots,
             causes = listOf(
                 "Paparan sinar UV berlebihan",
                 "Bekas jerawat yang tidak dirawat",
@@ -175,7 +178,7 @@ object SkinProblemRepository {
             id = "oily_skin",
             title = "Kulit Berminyak",
             description = "Kulit berminyak terjadi ketika kelenjar sebaceous memproduksi sebum berlebih. Kulit terlihat mengilap, pori-pori besar, dan rentan berjerawat.",
-            icon = "💧",
+            imageResId = R.drawable.oily_skin,
             causes = listOf(
                 "Produksi sebum berlebih secara genetik",
                 "Perubahan hormon",
@@ -213,7 +216,7 @@ object SkinProblemRepository {
             id = "dry_skin",
             title = "Kulit Kering",
             description = "Kulit kering terjadi ketika kulit tidak mampu mempertahankan kelembaban dengan baik. Kulit terasa kencang, kasar, dan kadang mengelupas.",
-            icon = "🏜️",
+            imageResId = R.drawable.dry_skin,
             causes = listOf(
                 "Produksi sebum kurang",
                 "Cuaca dingin dan kering",
@@ -251,7 +254,7 @@ object SkinProblemRepository {
             id = "sensitive_skin",
             title = "Kulit Sensitif",
             description = "Kulit sensitif mudah mengalami reaksi seperti kemerahan, gatal, atau iritasi terhadap produk atau faktor lingkungan tertentu.",
-            icon = "🌿",
+            imageResId = R.drawable.sensitive_skin,
             causes = listOf(
                 "Skin barrier rusak",
                 "Reaksi alergi terhadap bahan tertentu",
@@ -289,7 +292,7 @@ object SkinProblemRepository {
             id = "large_pores",
             title = "Pori-Pori Besar",
             description = "Pori-pori besar adalah kondisi dimana pori-pori terlihat lebih besar dari normalnya. Biasanya terjadi di zona T dan pipi.",
-            icon = "🔍",
+            imageResId = R.drawable.large_pores,
             causes = listOf(
                 "Faktor genetik",
                 "Produksi sebum berlebih",

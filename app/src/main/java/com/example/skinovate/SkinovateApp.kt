@@ -5,8 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.HeadsetMic
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +52,19 @@ fun SkinovateApp(
     onLogout: () -> Unit = {}
 ) {
     val navController = rememberNavController()
+    
+    // Observe current user to reinitialize repositories when user logs in
+    val currentUser by com.example.skinovate.auth.AuthRepository.currentUser.collectAsState()
+    
+    // Initialize repositories when user is logged in
+    if (context != null && currentUser != null) {
+        LaunchedEffect(currentUser?.id) {
+            // Reinitialize repositories to load data from database for the logged-in user
+            com.example.skinovate.data.UserRepository.init(context)
+            com.example.skinovate.data.RoutineRepository.init(context)
+            com.example.skinovate.data.ProductRepository.init(context)
+        }
+    }
 
     // List of screens for the bottom bar
     val items = listOf(Screen.Home, Screen.HistoryAnalysis, Screen.Learning, Screen.Products, Screen.Profile)
@@ -65,9 +81,10 @@ fun SkinovateApp(
                 modifier = Modifier.padding(bottom = 80.dp), // Above bottom bar
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Text(
-                    text = "💬",
-                    style = MaterialTheme.typography.titleLarge
+                Icon(
+                    imageVector = Icons.Default.HeadsetMic,
+                    contentDescription = "Chatbot",
+                    tint = Color.White
                 )
             }
         },

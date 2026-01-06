@@ -1,5 +1,6 @@
 package com.example.skinovate.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,9 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -122,10 +125,20 @@ fun ProblemDetailScreen(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = problem.icon,
-                            style = MaterialTheme.typography.displayLarge
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = problem.imageResId),
+                                contentDescription = problem.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = problem.description,
@@ -258,18 +271,15 @@ fun RecommendedProductCard(
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(
-                        Color(0xFFF5F5F5),
-                        shape = RoundedCornerShape(8.dp)
-                    ),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFFF5F5F5)),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.ui.platform.LocalContext.current
-                // You can add Image here if you have image resources
-                Text(
-                    text = product.brand.take(2).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
+                Image(
+                    painter = painterResource(id = product.imageResId),
+                    contentDescription = product.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize().padding(8.dp)
                 )
             }
             

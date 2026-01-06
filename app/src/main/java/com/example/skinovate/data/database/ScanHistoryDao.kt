@@ -56,5 +56,11 @@ interface ScanHistoryDao {
      */
     @Query("DELETE FROM scan_history WHERE userId = :userId")
     suspend fun deleteAllScans(userId: String)
+    
+    /**
+     * Get scan count for a user
+     */
+    @Query("SELECT COUNT(*) FROM scan_history WHERE userId = :userId")
+    suspend fun getScanCount(userId: String): Int
 }
 
